@@ -64,10 +64,20 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
 
+    implementation("androidx.compose.runtime:runtime-livedata:1.4.1")
+
+
     implementation 'com.google.zxing:core:3.5.1'
 
     implementation 'io.grpc:grpc-protobuf-lite:1.49.2'
-    implementation 'io.grpc:grpc-stub:1.49.2'
+    // LiveData & ViewModel
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.6.1"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1"
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1'
+
+    implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
+    implementation "com.google.code.gson:gson:$gson_version"
+    implementation("com.github.bumptech.glide:compose:1.0.0-alpha.1")
 
     implementation(project(":bili-api"))
 

@@ -9,15 +9,28 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
@@ -26,22 +39,61 @@ import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
+import com.storyteller_f.bi.components.HistoryPage
 import com.storyteller_f.bi.ui.theme.BiTheme
+import kotlinx.coroutines.launch
 import java.util.Collections
 import java.util.stream.IntStream
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            BiTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Greeting("Android")
+            val drawerState = rememberDrawerState(DrawerValue.Closed)
+            val coroutineScope = rememberCoroutineScope()
+            val open = {
+                coroutineScope.launch {
+                    drawerState.open()
                 }
+            }
+            val user by userInfo.observeAsState()
+            val u = user
+            BiTheme {
+                ModalNavigationDrawer(drawerContent = {
+                    if (u != null) {
+                        Text(text = u.name)
+                    } else Button(onClick = {
+
+                    }) {
+                        Text(text = "login")
+                    }
+                }, drawerState = drawerState) {
+                    Scaffold(topBar = {
+                        TopAppBar(
+                            title = {
+                                Text(text = "Bi")
+                            },
+                            navigationIcon = {
+                                IconButton(onClick = {
+                                    open()
+                                }) {
+                                    Icon(Icons.Filled.Menu, contentDescription = null)
+                                }
+                            },
+                        )
+                    }) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize().padding(it),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+//                            LoginPage(url, loadingState, checkState)
+                            HistoryPage()
+                        }
+                    }
+
+                }
+
             }
         }
     }
@@ -56,7 +108,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     }
     val widthDp = LocalConfiguration.current.smallestScreenWidthDp - 100
 
-    Column() {
+    Column {
         Text(
             text = "Hello $name!",
             modifier = modifier

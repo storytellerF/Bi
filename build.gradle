@@ -11,7 +11,7 @@ buildscript {
         lifecycle_version = '2.5.1'
         compose_version = '1.2.1'
 
-        okhttp_version = '4.10.0' // 3.11.0
+        okhttp_version = '5.0.0-alpha.10' // 3.11.0
         gson_version = '2.10.1'
         mojito_version = '1.8.7'
     }
