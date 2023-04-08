@@ -3,6 +3,7 @@ package com.storyteller_f.bi
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
+import com.a10miaomiao.bilimiao.comm.BilimiaoCommApp
 import com.a10miaomiao.bilimiao.comm.entity.user.UserInfo
 import com.google.gson.Gson
 import java.io.File
@@ -16,6 +17,12 @@ fun Context.saveUserInfo(userInfo: UserInfo?) {
     } else {
         file.delete()
     }
+}
+
+fun Context.logout() {
+    BilimiaoCommApp.commApp.deleteAuth()
+    userInfo.value = null
+    saveUserInfo(null)
 }
 
 fun Context.readUserInfo() {

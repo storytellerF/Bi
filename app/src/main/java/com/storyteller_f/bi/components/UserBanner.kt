@@ -1,5 +1,7 @@
 package com.storyteller_f.bi.components
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -20,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
@@ -34,6 +37,8 @@ import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.LoadingState
+import com.storyteller_f.bi.LoginActivity
+import com.storyteller_f.bi.logout
 import com.storyteller_f.bi.userInfo
 import kotlinx.coroutines.launch
 
@@ -41,17 +46,21 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserCenterDrawer(userInfo: UserInfo? = null) {
+    val current = LocalContext.current
     ModalDrawerSheet {
         Spacer(Modifier.height(12.dp))
-
         UserBanner(modifier = Modifier.padding(start = 16.dp), userInfo)
         Spacer(Modifier.height(12.dp))
         NavigationDrawerItem(label = { Text(text = "Setting") }, icon = {
             Icon(Icons.Filled.Settings, contentDescription = "setting")
-        }, selected = false, onClick = { /*TODO*/ })
+        }, selected = false, onClick = {
+            Toast.makeText(current, "not implementation", Toast.LENGTH_SHORT).show()
+        })
         NavigationDrawerItem(label = { Text(text = "Logout") }, icon = {
             Icon(Icons.Filled.Close, contentDescription = "logout")
-        }, selected = false, onClick = { /*TODO*/ })
+        }, selected = false, onClick = {
+            current.logout()
+        })
     }
 }
 
@@ -71,12 +80,12 @@ fun UserBanner(modifier: Modifier = Modifier, u: UserInfo? = null) {
             Text(text = u.name, modifier = Modifier.padding(start = 8.dp))
         }
     } else {
+        val current = LocalContext.current
         Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = coverSize.background(Color.Blue))
             Button(modifier = Modifier.padding(start = 8.dp), onClick = {
-
+                current.startActivity(Intent(current, LoginActivity::class.java))
             }) {
-
                 Text(text = "login")
             }
         }

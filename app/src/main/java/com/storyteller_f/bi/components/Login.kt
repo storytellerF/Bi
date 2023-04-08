@@ -12,10 +12,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -60,8 +58,8 @@ class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context)
                     .qrCode()
                     .awaitCall()
                     .gson<ResultInfo<QRLoginInfo>>()
-                if (res.isSuccess) {
-                    val data = res.data
+                val data = res.data
+                if (res.isSuccess && data.url.isNotEmpty() && data.auth_code.isNotEmpty()) {
                     qrcodeUrl.value = data.url
                     currentAuthCode = data.auth_code
                     state.value = LoadingState.Done
@@ -156,11 +154,8 @@ fun LoginInternal(
     @PreviewParameter(LoginPreviewProvider::class) state: LoginState
 ) {
     val (qrcodeUrl, loadingState, checkState) = state
-    val image by remember {
-        derivedStateOf {
-            (qrcodeUrl ?: "qrcode not ready").createQRImage(200, 200)
-        }
-    }
+    val image = (qrcodeUrl ?: "qrcode not ready").createQRImage(200, 200)
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val widthDp = LocalConfiguration.current.smallestScreenWidthDp - 100
         Box(contentAlignment = Alignment.Center) {
@@ -177,7 +172,8 @@ fun LoginInternal(
                 Text(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.errorContainer)
-                        .padding(8.dp).widthIn(max = widthDp.dp),
+                        .padding(8.dp)
+                        .widthIn(max = widthDp.dp),
                     text = when (loadingState) {
                         is LoadingState.Error -> loadingState.e.localizedMessage
                         is LoadingState.Loading -> loadingState.state
@@ -188,7 +184,10 @@ fun LoginInternal(
         }
         if (checkState != null) {
             Text(
-                modifier = Modifier.padding(top = 8.dp).background(MaterialTheme.colorScheme.secondaryContainer).padding(8.dp),
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .padding(8.dp),
                 text = when (checkState) {
                     is LoadingState.Done -> "扫码成功"
                     is LoadingState.Loading -> checkState.state
