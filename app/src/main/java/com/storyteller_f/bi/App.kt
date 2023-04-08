@@ -2,6 +2,8 @@ package com.storyteller_f.bi
 
 import android.app.Application
 import com.a10miaomiao.bilimiao.comm.BilimiaoCommApp
+import com.bumptech.glide.annotation.GlideModule
+import com.bumptech.glide.module.AppGlideModule
 
 class App: Application() {
 

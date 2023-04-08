@@ -2,18 +2,27 @@ package com.storyteller_f.bi.components
 
 import android.app.Application
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
@@ -35,7 +44,7 @@ import kotlinx.coroutines.launch
 
 class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context) {
     val state = MutableLiveData<LoadingState>()
-    val url = MutableLiveData<String>()
+    val qrcodeUrl = MutableLiveData<String>()
     val checkState = MutableLiveData<LoadingState>()
     var currentAuthCode: String? = null
 
@@ -53,7 +62,7 @@ class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context)
                     .gson<ResultInfo<QRLoginInfo>>()
                 if (res.isSuccess) {
                     val data = res.data
-                    url.value = data.url
+                    qrcodeUrl.value = data.url
                     currentAuthCode = data.auth_code
                     state.value = LoadingState.Done
                     checkState.value = LoadingState.Loading("等待扫码")
@@ -127,44 +136,66 @@ class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context)
     }
 }
 
+data class LoginState(
+    val qrcodeUrl: String?,
+    val loadingState: LoadingState?,
+    val checkState: LoadingState?
+)
+
+class LoginPreviewProvider : PreviewParameterProvider<LoginState> {
+    override val values: Sequence<LoginState>
+        get() = sequence {
+            yield(LoginState("hello", LoadingState.Done, LoadingState.Done))
+            yield(LoginState(null, LoadingState.Loading("loading"), null))
+        }
+}
+
+@Preview
 @Composable
 fun LoginInternal(
-    url: String?,
-    loadingState: LoadingState?,
-    checkState: LoadingState?
+    @PreviewParameter(LoginPreviewProvider::class) state: LoginState
 ) {
+    val (qrcodeUrl, loadingState, checkState) = state
     val image by remember {
         derivedStateOf {
-            (url ?: "url not ready").createQRImage(200, 200)
+            (qrcodeUrl ?: "qrcode not ready").createQRImage(200, 200)
         }
     }
-    Column {
-        Text(
-            text = when (loadingState) {
-                is LoadingState.Error -> loadingState.e.localizedMessage
-                is LoadingState.Done -> url.toString()
-                else -> loadingState.toString()
-            }
-        )
-        val ls = checkState
-        Text(
-            text = when (ls) {
-                is LoadingState.Done -> "done"
-                is LoadingState.Loading -> ls.state
-                is LoadingState.Error -> ls.e.localizedMessage
-                else -> "else"
-            }
-        )
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val widthDp = LocalConfiguration.current.smallestScreenWidthDp - 100
-        Image(
-            bitmap = image.asImageBitmap(),
-            contentDescription = "test",
-            modifier = Modifier
-                .width(
-                    widthDp.dp
+        Box(contentAlignment = Alignment.Center) {
+            Image(
+                bitmap = image.asImageBitmap(),
+                contentDescription = "test",
+                modifier = Modifier
+                    .width(
+                        widthDp.dp
+                    )
+                    .height(widthDp.dp)
+            )
+            if (loadingState !is LoadingState.Done) {
+                Text(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.errorContainer)
+                        .padding(8.dp).widthIn(max = widthDp.dp),
+                    text = when (loadingState) {
+                        is LoadingState.Error -> loadingState.e.localizedMessage
+                        is LoadingState.Loading -> loadingState.state
+                        else -> "impossible"
+                    }
                 )
-                .height(widthDp.dp)
-        )
+            }
+        }
+        if (checkState != null) {
+            Text(
+                modifier = Modifier.padding(top = 8.dp).background(MaterialTheme.colorScheme.secondaryContainer).padding(8.dp),
+                text = when (checkState) {
+                    is LoadingState.Done -> "扫码成功"
+                    is LoadingState.Loading -> checkState.state
+                    is LoadingState.Error -> checkState.e.localizedMessage
+                }
+            )
+        }
     }
 }
 
@@ -172,7 +203,7 @@ fun LoginInternal(
 fun LoginPage() {
     val loginViewModel = viewModel<QrcodeLoginViewModel>()
     val loadingState by loginViewModel.state.observeAsState()
-    val url by loginViewModel.url.observeAsState()
+    val url by loginViewModel.qrcodeUrl.observeAsState()
     val checkState by loginViewModel.checkState.observeAsState()
-    LoginInternal(url, loadingState, checkState)
+    LoginInternal(LoginState(url, loadingState, checkState))
 }

@@ -5,41 +5,40 @@ import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.storyteller_f.bi.components.HistoryPage
+import com.storyteller_f.bi.components.HomeTopBar
+import com.storyteller_f.bi.components.MomentsPage
+import com.storyteller_f.bi.components.Screen
+import com.storyteller_f.bi.components.UserCenterDrawer
 import com.storyteller_f.bi.ui.theme.BiTheme
 import kotlinx.coroutines.launch
 import java.util.Collections
@@ -52,6 +51,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val coroutineScope = rememberCoroutineScope()
+            val navController = rememberNavController()
+
             val open = {
                 coroutineScope.launch {
                     drawerState.open()
@@ -59,36 +60,65 @@ class MainActivity : ComponentActivity() {
             }
             val user by userInfo.observeAsState()
             val u = user
+            val items = listOf(
+                Screen.History,
+                Screen.Moments,
+            )
             BiTheme {
-                ModalNavigationDrawer(drawerContent = {
-                    if (u != null) {
-                        Text(text = u.name)
-                    } else Button(onClick = {
-
-                    }) {
-                        Text(text = "login")
-                    }
-                }, drawerState = drawerState) {
+                ModalNavigationDrawer(
+                    drawerContent = {
+                        UserCenterDrawer(userInfo = u)
+                    },
+                    drawerState = drawerState
+                ) {
                     Scaffold(topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(text = "Bi")
-                            },
-                            navigationIcon = {
-                                IconButton(onClick = {
-                                    open()
-                                }) {
+                        HomeTopBar {
+                            open()
+                        }
+                    }, bottomBar = {
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        val currentDestination = navBackStackEntry?.destination
+                        NavigationBar {
+                            items.forEach { screen ->
+                                val selected =
+                                    currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                                NavigationBarItem(selected = selected, onClick = {
+                                    navController.navigate(screen.route) {
+                                        // Pop up to the start destination of the graph to
+                                        // avoid building up a large stack of destinations
+                                        // on the back stack as users select items
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        // Avoid multiple copies of the same destination when
+                                        // reselecting the same item
+                                        launchSingleTop = true
+                                        // Restore state when reselecting a previously selected item
+                                        restoreState = true
+                                    }
+                                }, {
                                     Icon(Icons.Filled.Menu, contentDescription = null)
-                                }
-                            },
-                        )
+                                }, label = {
+                                    Text(text = stringResource(id = screen.resourceId))
+                                })
+                            }
+                        }
                     }) {
                         Surface(
-                            modifier = Modifier.fillMaxSize().padding(it),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(it),
                             color = MaterialTheme.colorScheme.background
                         ) {
-//                            LoginPage(url, loadingState, checkState)
-                            HistoryPage()
+                            NavHost(navController = navController, startDestination = Screen.History.route) {
+                                composable(Screen.History.route) {
+                                    HistoryPage()
+                                }
+                                composable(Screen.Moments.route) {
+                                    MomentsPage()
+                                }
+                            }
+
                         }
                     }
 
@@ -97,39 +127,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    val image by remember {
-        derivedStateOf {
-            "hello".createQRImage(200, 200)
-        }
-    }
-    val widthDp = LocalConfiguration.current.smallestScreenWidthDp - 100
-
-    Column {
-        Text(
-            text = "Hello $name!",
-            modifier = modifier
-        )
-        Button(onClick = { /*TODO*/ }) {
-            Text(text = "request")
-        }
-        Button(onClick = { /*TODO*/ }) {
-            Text(text = "get")
-        }
-        Image(
-            bitmap = image.asImageBitmap(),
-            contentDescription = "test",
-            modifier = Modifier
-                .width(
-                    widthDp.dp
-                )
-                .height(widthDp.dp)
-        )
-    }
-
 }
 
 fun String.createQRImage(width: Int, height: Int): Bitmap {
@@ -149,12 +146,4 @@ fun String.createQRImage(width: Int, height: Int): Bitmap {
         }.toArray(),
         width, height, Bitmap.Config.ARGB_8888
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    BiTheme {
-        Greeting("Android")
-    }
 }

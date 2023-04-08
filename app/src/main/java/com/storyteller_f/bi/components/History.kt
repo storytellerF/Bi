@@ -27,6 +27,18 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.LoadingState
 import kotlinx.coroutines.launch
 
+fun MutableLiveData<LoadingState>.loaded() {
+    value = LoadingState.Done
+}
+
+fun MutableLiveData<LoadingState>.error(e: Exception) {
+    value = LoadingState.Error(e)
+}
+
+fun MutableLiveData<LoadingState>.loading(message: String = "") {
+    value = LoadingState.Loading(message)
+}
+
 class HistoryViewModel : ViewModel() {
     var list = PaginationInfo<HistoryOuterClass.CursorItem>()
     val state = MutableLiveData<LoadingState>()
@@ -37,7 +49,7 @@ class HistoryViewModel : ViewModel() {
 
     fun load() {
         viewModelScope.launch {
-            state.value = LoadingState.Loading("")
+            state.loading()
             try {
                 val req = HistoryOuterClass.CursorV2Req.newBuilder().apply {
                     business = "archive"
@@ -49,9 +61,9 @@ class HistoryViewModel : ViewModel() {
                     .request(req)
                     .awaitCall()
                 list.data.addAll(res.itemsList)
-                state.value = LoadingState.Done
+                state.loaded()
             } catch (e: Exception) {
-                state.value = LoadingState.Error(e)
+                state.error(e)
             }
 
         }
@@ -70,7 +82,7 @@ fun HistoryPage() {
         is LoadingState.Done -> LazyColumn {
             items(list.data.size) {
                 val cursorItem = list.data[it]
-                HistoryItem(cursorItem, editMode = false)
+                HistoryItem(cursorItem)
             }
         }
 
@@ -87,28 +99,38 @@ class VideoItemProvider : PreviewParameterProvider<HistoryOuterClass.CursorItem>
 
 }
 
-@Preview
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HistoryItem(
     @PreviewParameter(VideoItemProvider::class) item: HistoryOuterClass.CursorItem,
-    editMode: Boolean = true
+) {
+    val text = item.title
+    val text1 = item.dt.type.name
+    VideoItem(item.cover(), text, text1)
+}
+
+@Preview
+@Composable
+@OptIn(ExperimentalGlideComposeApi::class)
+fun VideoItem(
+    url: String? = null,
+    text: String = "text",
+    label: String = "label"
 ) {
 
     Row(modifier = Modifier.padding(8.dp)) {
         val coverModifier = Modifier
             .width(80.dp)
             .height(45.dp)
-        if (editMode) {
+        if (url == null) {
             Box(coverModifier.background(Color.Blue))
         } else {
-            val url = UrlUtil.autoHttps(item.cover())
-            val u = "$url@672w_378h_1c_"
+            val u = "${UrlUtil.autoHttps(url)}@672w_378h_1c_"
             GlideImage(u, contentDescription = null, modifier = coverModifier)
         }
         Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text(text = item.title)
-            Text(text = item.dt.type.name)
+            Text(text = text)
+            Text(text = label)
         }
     }
 }
