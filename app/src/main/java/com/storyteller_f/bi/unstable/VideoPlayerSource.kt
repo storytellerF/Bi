@@ -50,17 +50,6 @@ class VideoPlayerSource(
         return PlayerSourceInfo(url, res.quality, acceptList, duration)
     }
 
-    private suspend fun getBiliDanmukuStream(): InputStream? {
-        val res = BiliApiService.playerAPI.getDanmakuList(id)
-            .awaitCall()
-        val body = res.body
-        return if (body == null) {
-            null
-        } else {
-            ByteArrayInputStream(CompressionTools.decompressXML(body.bytes()))
-        }
-    }
-
     override suspend fun getSubtitles(): List<SubtitleSourceInfo> {
         try {
             val res = BiliApiService.playerAPI

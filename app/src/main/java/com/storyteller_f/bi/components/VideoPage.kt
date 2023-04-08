@@ -3,9 +3,9 @@ package com.storyteller_f.bi.components
 import android.content.Context
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -60,20 +61,24 @@ fun VideoPage(videoId: String = "") {
         set(VideoIdKey, videoId)
     })
     val current = LocalContext.current
+    val scope = rememberCoroutineScope()
     val info by videoViewModel.info.observeAsState()
     val playData by videoViewModel.playData.observeAsState()
     val rawState by videoViewModel.state.observeAsState()
     val pageData by videoViewModel.pagesData.observeAsState()
-    var playingUrl by remember {
+    var mediaSource by remember {
         mutableStateOf<MediaSource?>(null)
     }
-    val p = pageData
+    var playerSource by remember {
+        mutableStateOf<VideoPlayerSource?>(null)
+    }
+    val pages = pageData
     LaunchedEffect(key1 = playData) {
-        val (source, url) = withContext(Dispatchers.IO) {
-            videoViewModel.getUrl(current)
+        val (source, sourceInfo) = withContext(Dispatchers.IO) {
+            videoViewModel.sourceVideoPlayerSourcePair(current)
         }
-        println("url : $url")
-        playingUrl = source
+        playerSource = sourceInfo
+        mediaSource = source
     }
     when (val state = rawState) {
         is LoadingState.Loading -> Text(text = "loading")
@@ -81,30 +86,29 @@ fun VideoPage(videoId: String = "") {
         is LoadingState.Done -> {
             Column {
                 Text(text = videoId)
-                Box(
-                    modifier = Modifier
-                        .aspectRatio(16f / 9)
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                ) {
-                    val player = ExoPlayer.Builder(current).build()
-                    DisposableEffect(key1 = player, effect = {
-                        onDispose {
-                            player.stop()
-                            player.release()
+                val source = mediaSource
+                val player = ExoPlayer.Builder(current).build()
+                DisposableEffect(key1 = player, effect = {
+                    onDispose {
+                        scope.launch {
+                            playerSource?.historyReport(player.currentPosition)
                         }
-                    })
-                    val pp = playingUrl
-                    AndroidView(factory = {
-                        StyledPlayerView(it)
-                    }) {
-                        it.player = player
-                        if (pp != null) {
-                            player.addMediaSource(pp)
-                            player.prepare()
-                            player.play()
+                        player.stop()
+                        player.release()
+                    }
+                })
+                AndroidView(factory = {
+                    StyledPlayerView(it)
+                }, modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9)) {
+                    it.player = player
+                    if (source != null) {
+                        player.addMediaSource(source)
+                        player.prepare()
+                        player.play()
+                        scope.launch {
+                            playerSource?.historyReport(player.currentPosition)
                         }
                     }
-
                 }
                 Text(text = info?.title.orEmpty())
                 val pubDate = info?.pubdate
@@ -116,10 +120,10 @@ fun VideoPage(videoId: String = "") {
                     )
                     Text(text = pubDate.toString())
                 }
-                if (!p.isNullOrEmpty()) {
+                if (!pages.isNullOrEmpty()) {
                     LazyRow {
-                        items(p.size) {
-                            val videoPageInfo = p[it]
+                        items(pages.size) {
+                            val videoPageInfo = pages[it]
                             Text(text = "${videoPageInfo.part}  - ${videoPageInfo.page}")
                         }
                     }
@@ -170,18 +174,18 @@ class VideoViewModel(private val videoId: String) : ViewModel() {
         )
     }
 
-    suspend fun getUrl(context: Context): Pair<MediaSource?, String?> {
+    suspend fun sourceVideoPlayerSourcePair(context: Context): Pair<MediaSource?, VideoPlayerSource?> {
         val playerSource = playData.value ?: return null to null
-        val playerUrl = playerSource.getPlayerUrl(64, 1)
+        val sourceInfo = playerSource.getPlayerUrl(64, 1)
 
-        val url = playerUrl.url
+        val url = sourceInfo.url
         return when {
-            url.contains("\n") -> PlayerDelegate().mediaSource(context, playerSource) to null
+            url.contains("\n") -> PlayerDelegate().mediaSource(context, playerSource) to playerSource
             else -> {
                 val factory = DefaultHttpDataSource.Factory()
                 factory.setUserAgent(PlayerDelegate.DEFAULT_USER_AGENT)
                 factory.setDefaultRequestProperties(PlayerDelegate().getDefaultRequestProperties(playerSource))
-                ProgressiveMediaSource.Factory(factory).createMediaSource(fromUri(url)) to url
+                ProgressiveMediaSource.Factory(factory).createMediaSource(fromUri(url)) to playerSource
             }
         }
     }
