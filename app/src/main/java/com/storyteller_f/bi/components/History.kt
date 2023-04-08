@@ -1,6 +1,8 @@
 package com.storyteller_f.bi.components
 
+import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
@@ -9,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -25,6 +28,7 @@ import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.LoadingState
+import com.storyteller_f.bi.VideoActivity
 import kotlinx.coroutines.launch
 
 fun MutableLiveData<LoadingState>.loaded() {
@@ -33,6 +37,10 @@ fun MutableLiveData<LoadingState>.loaded() {
 
 fun MutableLiveData<LoadingState>.error(e: Exception) {
     value = LoadingState.Error(e)
+}
+
+fun MutableLiveData<LoadingState>.error(e: String) {
+    value = LoadingState.Error(Exception(e))
 }
 
 fun MutableLiveData<LoadingState>.loading(message: String = "") {
@@ -99,14 +107,18 @@ class VideoItemProvider : PreviewParameterProvider<HistoryOuterClass.CursorItem>
 
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HistoryItem(
     @PreviewParameter(VideoItemProvider::class) item: HistoryOuterClass.CursorItem,
 ) {
+    val current = LocalContext.current
     val text = item.title
-    val text1 = item.dt.type.name
-    VideoItem(item.cover(), text, text1)
+    val label = item.dt.type.name
+    VideoItem(item.cover(), text, label) {
+        current.startActivity(Intent(current, VideoActivity::class.java).apply {
+            putExtra("videoId", item.oid.toString())
+        })
+    }
 }
 
 @Preview
@@ -115,13 +127,15 @@ fun HistoryItem(
 fun VideoItem(
     url: String? = null,
     text: String = "text",
-    label: String = "label"
+    label: String = "label",
+    watchVideo: () -> Unit = {}
 ) {
-
-    Row(modifier = Modifier.padding(8.dp)) {
+    Row(modifier = Modifier.padding(8.dp).clickable {
+        watchVideo()
+    }) {
         val coverModifier = Modifier
-            .width(80.dp)
-            .height(45.dp)
+            .width((16 * 7).dp)
+            .height((8 * 7).dp)
         if (url == null) {
             Box(coverModifier.background(Color.Blue))
         } else {

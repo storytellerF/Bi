@@ -9,4 +9,4 @@
 
 Material Design 的哔哩哔哩非官方客户端
 
-基于[bilimiao2](https://github.com/10miaomiao/bilimiao2) 构建，以GPL 协议发布
+基于[bilimiao2](https://github.com/10miaomiao/bilimiao2) 制作，基于Jetpack Compose 构建（未来会迁移到KMM），以GPL 协议发布

@@ -8,7 +8,6 @@ import com.bumptech.glide.module.AppGlideModule
 class App: Application() {
 
     companion object {
-        const val APP_NAME = "bilimiao"
         lateinit var commApp: BilimiaoCommApp
     }
 
@@ -18,11 +17,6 @@ class App: Application() {
 
     override fun onCreate() {
         super.onCreate()
-//        ThemeDelegate.setNightMode(this)
-//        Mojito.initialize(
-//            GlideImageLoader.with(this),
-//            SketchImageLoadFactory()
-//        )
         commApp.onCreate()
         readUserInfo()
     }

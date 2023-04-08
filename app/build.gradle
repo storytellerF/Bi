@@ -84,4 +84,6 @@ dependencies {
 
     implementation(project(":bili-api"))
 
+    implementation 'com.google.android.exoplayer:exoplayer:2.18.5'
+
 }
