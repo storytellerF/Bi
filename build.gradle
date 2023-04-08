@@ -1,6 +1,25 @@
+buildscript {
+    ext {
+        compile_sdk_version = 32
+        build_tools_version = 30
+        target_sdk_version = 32
+
+        material_version = "1.6.1"
+        splitties_version = "3.0.0-beta06"
+        nav_version = "2.3.5"
+        kodein_di_version = '7.12.0'
+        lifecycle_version = '2.5.1'
+        compose_version = '1.2.1'
+
+        okhttp_version = '4.10.0' // 3.11.0
+        gson_version = '2.10.1'
+        mojito_version = '1.8.7'
+    }
+}
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     id 'com.android.application' version '8.0.0-rc01' apply false
     id 'com.android.library' version '8.0.0-rc01' apply false
-    id 'org.jetbrains.kotlin.android' version '1.7.20' apply false
+    id 'org.jetbrains.kotlin.android' version '1.8.10' apply false
+    id("com.google.protobuf") version "0.9.1" apply false
 }

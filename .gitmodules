@@ -1,0 +1,3 @@
+[submodule "bilimiao2"]
+	path = bilimiao2
+	url = git@personal:storytellerF/bilimiao2.git

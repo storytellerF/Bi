@@ -14,3 +14,8 @@ dependencyResolutionManagement {
 }
 rootProject.name = "bi"
 include ':app'
+
+include("bili-api")
+project(":bili-api").projectDir = file("bilimiao2/bilimiao-comm")
+include("DanmakuFlameMaster")
+project(":DanmakuFlameMaster").projectDir = file("bilimiao2/DanmakuFlameMaster")
