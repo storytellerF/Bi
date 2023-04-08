@@ -80,7 +80,7 @@ class PlayerDelegate {
             }
         }
     }
-    private fun getDefaultRequestProperties(playerSource: BasePlayerSource): Map<String, String> {
+    fun getDefaultRequestProperties(playerSource: BasePlayerSource): Map<String, String> {
         val header = HashMap<String, String>()
         if (playerSource is VideoPlayerSource) {
             header["Referer"] = DEFAULT_REFERER

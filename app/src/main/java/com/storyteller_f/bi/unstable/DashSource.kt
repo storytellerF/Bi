@@ -33,7 +33,7 @@ class DashSource(
     fun getMDPUrl(): String {
         val video = getDashVideo()!!
         val audio = getDashAudio()
-        var mpdStr = """
+        val mpdStr = """
 <MPD xmlns="urn:mpeg:DASH:schema:MPD:2011" profiles="urn:mpeg:dash:profile:isoff-on-demand:2011" type="static" mediaPresentationDuration="PT${dashData.duration}S" minBufferTime="PT${dashData.min_buffer_time}S">
     <Period start="PT0S">
         <AdaptationSet>
