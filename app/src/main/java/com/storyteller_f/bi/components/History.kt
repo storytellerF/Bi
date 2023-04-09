@@ -1,14 +1,13 @@
 package com.storyteller_f.bi.components
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -20,16 +19,22 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.LoadState
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
+import androidx.paging.cachedIn
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import bilibili.app.interfaces.v1.HistoryGrpc
 import bilibili.app.interfaces.v1.HistoryOuterClass
-import com.a10miaomiao.bilimiao.comm.entity.comm.PaginationInfo
 import com.a10miaomiao.bilimiao.comm.network.request
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.VideoActivity
-import kotlinx.coroutines.launch
 
 fun MutableLiveData<LoadingState>.loaded() {
     value = LoadingState.Done
@@ -48,53 +53,31 @@ fun MutableLiveData<LoadingState>.loading(message: String = "") {
 }
 
 class HistoryViewModel : ViewModel() {
-    var list = PaginationInfo<HistoryOuterClass.CursorItem>()
-    val state = MutableLiveData<LoadingState>()
+    val flow = Pager(
+        // Configure how data is loaded by passing additional properties to
+        // PagingConfig, such as prefetchDistance.
+        PagingConfig(pageSize = 20)
+    ) {
+        HistoryPagingSource()
+    }.flow
+        .cachedIn(viewModelScope)
 
-    init {
-        load()
-    }
-
-    fun load() {
-        viewModelScope.launch {
-            state.loading()
-            try {
-                val req = HistoryOuterClass.CursorV2Req.newBuilder().apply {
-                    business = "archive"
-                    cursor = HistoryOuterClass.Cursor.newBuilder().apply {
-
-                    }.build()
-                }.build()
-                val res = HistoryGrpc.getCursorV2Method()
-                    .request(req)
-                    .awaitCall()
-                list.data.addAll(res.itemsList)
-                state.loaded()
-            } catch (e: Exception) {
-                state.error(e)
-            }
-
-        }
-
-    }
 }
 
 @Composable
 fun HistoryPage() {
     val viewModel = viewModel<HistoryViewModel>()
-    val observeAsState by viewModel.state.observeAsState()
-    val list = viewModel.list
-    when (val state = observeAsState) {
-        is LoadingState.Loading -> Text(text = "loading")
-        is LoadingState.Error -> Text(text = state.e.localizedMessage ?: "")
-        is LoadingState.Done -> LazyColumn {
-            items(list.data.size) {
-                val cursorItem = list.data[it]
-                HistoryItem(cursorItem)
+    val lazyItems = viewModel.flow.collectAsLazyPagingItems()
+    when (val state = lazyItems.loadState.refresh) {
+        is LoadState.Loading -> Text(text = "loading")
+        is LoadState.Error -> Text(text = state.error.localizedMessage ?: "")
+        is LoadState.NotLoading -> LazyColumn {
+            items(lazyItems, {
+                it.oid.toString() + "" + it.kid.toString()
+            }) { item ->
+                HistoryItem(item ?: HistoryOuterClass.CursorItem.getDefaultInstance())
             }
         }
-
-        else -> Text(text = "impossible")
     }
 }
 
@@ -130,12 +113,14 @@ fun VideoItem(
     label: String = "label",
     watchVideo: () -> Unit = {}
 ) {
-    Row(modifier = Modifier.padding(8.dp).clickable {
-        watchVideo()
-    }) {
+    Row(modifier = Modifier
+        .padding(8.dp)
+        .clickable {
+            watchVideo()
+        }) {
         val coverModifier = Modifier
-            .width((16 * 7).dp)
-            .height((8 * 7).dp)
+            .width((16 * 8).dp)
+            .height((8 * 8).dp)
         if (url == null) {
             Box(coverModifier.background(Color.Blue))
         } else {
@@ -154,5 +139,54 @@ fun HistoryOuterClass.CursorItem.cover(): String {
         cardOgv.cover
     } else {
         cardUgc.cover
+    }
+}
+
+class HistoryPagingSource : PagingSource<HistoryOuterClass.Cursor, HistoryOuterClass.CursorItem>() {
+    override suspend fun load(
+        params: LoadParams<HistoryOuterClass.Cursor>
+    ): LoadResult<HistoryOuterClass.Cursor, HistoryOuterClass.CursorItem> {
+        try {
+            /**
+             * 历史结果
+             * load: 0 0
+             * load: 1680969219 3
+             * load: 1680968482 3
+             * load: 1680963212 3
+             */
+            val (lastMax, lastTp) = if (params.key != null) {
+                (params.key?.max ?: 0L) to (params.key?.maxTp ?: 0)
+            } else 0L to 0
+            Log.i(TAG, "load: $lastMax $lastTp")
+            val req = HistoryOuterClass.CursorV2Req.newBuilder().apply {
+                business = "archive"
+                cursor = HistoryOuterClass.Cursor.newBuilder().apply {
+                    if (lastMax != 0L) {
+                        max = lastMax
+                        maxTp = lastTp
+                    }
+                }.build()
+            }.build()
+            val res = HistoryGrpc.getCursorV2Method()
+                .request(req)
+                .awaitCall()
+            return LoadResult.Page(
+                data = res.itemsList,
+                prevKey = null, // Only paging forward.
+                nextKey = res.cursor
+            )
+        } catch (e: Exception) {
+            // Handle errors in this block and return LoadResult.Error if it is an
+            // expected error (such as a network failure).
+            return LoadResult.Error(e)
+        }
+    }
+
+    override fun getRefreshKey(state: PagingState<HistoryOuterClass.Cursor, HistoryOuterClass.CursorItem>): HistoryOuterClass.Cursor? {
+        return null
+    }
+
+    companion object {
+        private const val TAG = "History"
     }
 }
