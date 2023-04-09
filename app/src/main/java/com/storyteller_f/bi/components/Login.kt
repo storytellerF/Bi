@@ -3,8 +3,10 @@ package com.storyteller_f.bi.components
 import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -50,7 +52,7 @@ class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context)
         load()
     }
 
-    fun load() {
+    private fun load() {
         viewModelScope.launch {
             try {
                 state.value = LoadingState.Loading("")
@@ -62,21 +64,22 @@ class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context)
                 if (res.isSuccess && data.url.isNotEmpty() && data.auth_code.isNotEmpty()) {
                     qrcodeUrl.value = data.url
                     currentAuthCode = data.auth_code
-                    state.value = LoadingState.Done
-                    checkState.value = LoadingState.Loading("等待扫码")
+                    state.loaded()
                     checkQr(data.auth_code)
                 } else {
-                    state.value = LoadingState.Error(java.lang.Exception(res.message))
+                    state.error(Exception(res.message))
                 }
             } catch (e: Exception) {
-                state.value = LoadingState.Error(e)
+                e.printStackTrace()
+                state.error(e)
             }
 
         }
     }
 
-    fun checkQr(authCode: String) {
+    private fun checkQr(authCode: String) {
         if (currentAuthCode != authCode) return
+        checkState.loading("等待扫码")
         viewModelScope.launch {
             val res = BiliApiService.authApi.checkQrCode(authCode)
                 .awaitCall()
@@ -156,7 +159,7 @@ fun LoginInternal(
     val (qrcodeUrl, loadingState, checkState) = state
     val image = (qrcodeUrl ?: "qrcode not ready").createQRImage(200, 200)
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
         val widthDp = LocalConfiguration.current.smallestScreenWidthDp - 100
         Box(contentAlignment = Alignment.Center) {
             Image(
@@ -175,7 +178,8 @@ fun LoginInternal(
                         .padding(8.dp)
                         .widthIn(max = widthDp.dp),
                     text = when (loadingState) {
-                        is LoadingState.Error -> loadingState.e.localizedMessage
+                        null -> "waiting"
+                        is LoadingState.Error -> loadingState.e.localizedMessage.orEmpty()
                         is LoadingState.Loading -> loadingState.state
                         else -> "impossible"
                     }

@@ -37,29 +37,40 @@ import bilibili.app.dynamic.v2.ModuleOuterClass
 import com.a10miaomiao.bilimiao.comm.network.request
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.storyteller_f.bi.OneCenter
 
 @Composable
 fun MomentsPage() {
     val viewModel = viewModel<MomentsViewModel>()
     val lazyPagingItems = viewModel.flow.collectAsLazyPagingItems()
     when (val state = lazyPagingItems.loadState.refresh) {
-        is LoadState.Loading -> Text(text = "loading", modifier = Modifier.fillMaxSize())
-        is LoadState.Error -> Text(text = state.error.localizedMessage ?: "")
-        is LoadState.NotLoading -> LazyColumn {
+        is LoadState.Error -> OneCenter {
+            Text(text = state.error.localizedMessage ?: "")
+        }
+        else -> LazyColumn {
+            if (lazyPagingItems.loadState.refresh == LoadState.Loading) {
+                item {
+                    Text(
+                        text = "Waiting for items to load from the backend",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentWidth(Alignment.CenterHorizontally)
+                    )
+                }
+            }
             items(lazyPagingItems) {
                 MomentItem(it ?: MomentsPreviewProvider().values.first(), editMode = false)
             }
             if (lazyPagingItems.loadState.append == LoadState.Loading) {
                 item {
                     CircularProgressIndicator(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .wrapContentWidth(Alignment.CenterHorizontally)
                     )
                 }
             }
         }
-
-        else -> Text(text = "impossible")
     }
 }
 
