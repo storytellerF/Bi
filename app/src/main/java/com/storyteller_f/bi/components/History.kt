@@ -2,14 +2,12 @@ package com.storyteller_f.bi.components
 
 import android.content.Intent
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -33,7 +31,11 @@ import com.a10miaomiao.bilimiao.comm.network.request
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.storyteller_f.bi.ErrorStateView
 import com.storyteller_f.bi.LoadingState
+import com.storyteller_f.bi.OneCenter
+import com.storyteller_f.bi.StandBy
+import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.VideoActivity
 
 fun MutableLiveData<LoadingState>.loaded() {
@@ -68,15 +70,14 @@ class HistoryViewModel : ViewModel() {
 fun HistoryPage() {
     val viewModel = viewModel<HistoryViewModel>()
     val lazyItems = viewModel.flow.collectAsLazyPagingItems()
-    when (val state = lazyItems.loadState.refresh) {
-        is LoadState.Loading -> Text(text = "loading")
-        is LoadState.Error -> Text(text = state.error.localizedMessage ?: "")
-        is LoadState.NotLoading -> LazyColumn {
+    StateView(state = lazyItems.loadState.refresh) {
+        LazyColumn {
             items(lazyItems, {
                 it.oid.toString() + "" + it.kid.toString()
             }) { item ->
                 HistoryItem(item ?: HistoryOuterClass.CursorItem.getDefaultInstance())
             }
+            bottomAppending(lazyItems)
         }
     }
 }
@@ -108,7 +109,7 @@ fun HistoryItem(
 @Composable
 @OptIn(ExperimentalGlideComposeApi::class)
 fun VideoItem(
-    url: String? = null,
+    pic: String = "",
     text: String = "text",
     label: String = "label",
     watchVideo: () -> Unit = {}
@@ -121,10 +122,8 @@ fun VideoItem(
         val coverModifier = Modifier
             .width((16 * 8).dp)
             .height((8 * 8).dp)
-        if (url == null) {
-            Box(coverModifier.background(Color.Blue))
-        } else {
-            val u = "${UrlUtil.autoHttps(url)}@672w_378h_1c_"
+        StandBy(width = 16 * 8, height = 8 * 8) {
+            val u = "${UrlUtil.autoHttps(pic)}@672w_378h_1c_"
             GlideImage(u, contentDescription = null, modifier = coverModifier)
         }
         Column(modifier = Modifier.padding(start = 8.dp)) {

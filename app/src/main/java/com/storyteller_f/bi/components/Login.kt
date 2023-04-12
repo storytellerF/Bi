@@ -42,7 +42,7 @@ import com.storyteller_f.bi.userInfo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context) {
+class QrcodeLoginViewModel(private val context: Application) : AndroidViewModel(context) {
     val state = MutableLiveData<LoadingState>()
     val qrcodeUrl = MutableLiveData<String>()
     val checkState = MutableLiveData<LoadingState>()
@@ -86,14 +86,14 @@ class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context)
                 .gson<ResultInfo<LoginInfo.QrLoginInfo>>()
             when (res.code) {
                 86039 -> {
-                    checkState.value = LoadingState.Loading("未确认")
+                    checkState.loading("未确认")
                     // 未确认
                     delay(3000)
                     checkQr(authCode)
                 }
 
                 86090 -> {
-                    checkState.value = LoadingState.Loading("扫描成功，请点击确认")
+                    checkState.loading("扫描成功，请点击确认")
                     // 已扫码未确认
                     delay(2000)
                     checkQr(authCode)
@@ -101,11 +101,11 @@ class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context)
 
                 86038, -3 -> {
                     // 过期、失效
-                    checkState.value = LoadingState.Loading("二维码已过期，请刷新")
+                    checkState.loading("二维码已过期，请刷新")
                 }
 
                 0 -> {
-                    checkState.value = LoadingState.Loading("扫码成功，正在读取信息")
+                    checkState.loading("扫码成功，正在读取信息")
                     // 成功
                     val loginInfo = res.data.toLoginInfo()
                     BilimiaoCommApp.commApp.saveAuthInfo(loginInfo)
@@ -114,7 +114,7 @@ class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context)
 
                 else -> {
                     // 发生错误
-                    checkState.value = LoadingState.Loading("登录失败，请稍后重试\n" + res.message)
+                    checkState.loading("登录失败，请稍后重试\n" + res.message)
                 }
             }
         }
@@ -131,7 +131,7 @@ class QrcodeLoginViewModel(val context: Application) : AndroidViewModel(context)
             context.saveUserInfo(res.data)
             LoadingState.Done
         } else {
-            LoadingState.Error(java.lang.Exception(res.message))
+            LoadingState.Error(Exception(res.message))
         }
 
     }

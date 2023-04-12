@@ -4,11 +4,13 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,9 +30,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -44,6 +47,7 @@ import com.storyteller_f.bi.components.HistoryPage
 import com.storyteller_f.bi.components.HomeTopBar
 import com.storyteller_f.bi.components.MomentsPage
 import com.storyteller_f.bi.components.Screen
+import com.storyteller_f.bi.components.ToBePlayedPage
 import com.storyteller_f.bi.components.UserCenterDrawer
 import com.storyteller_f.bi.ui.theme.BiTheme
 import kotlinx.coroutines.launch
@@ -73,6 +77,7 @@ class MainActivity : ComponentActivity() {
             val items = listOf(
                 Screen.History,
                 Screen.Moments,
+                Screen.ToBePlay
             )
             BiTheme {
                 ModalNavigationDrawer(
@@ -107,7 +112,6 @@ class MainActivity : ComponentActivity() {
                                         restoreState = true
                                     }
                                 }, {
-                                    Log.i(TAG, "onCreate: ${screen.icon}")
                                     when {
                                         screen.icon != null -> {
                                             Icon(
@@ -115,6 +119,7 @@ class MainActivity : ComponentActivity() {
                                                 contentDescription = screen.route
                                             )
                                         }
+
                                         screen.vector != null -> Icon(
                                             screen.vector,
                                             contentDescription = screen.route
@@ -146,6 +151,11 @@ class MainActivity : ComponentActivity() {
                                         MomentsPage()
                                     }
                                 }
+                                composable(Screen.ToBePlay.route) {
+                                    UserAware {
+                                        ToBePlayedPage()
+                                    }
+                                }
                             }
 
                         }
@@ -172,6 +182,18 @@ class MainActivity : ComponentActivity() {
         } else {
             content()
         }
+    }
+}
+
+@Composable
+fun StandBy(width: Int, height: Int, me: @Composable () -> Unit) {
+    val view = LocalView.current
+    if (view.isInEditMode) {
+        Box(modifier = Modifier
+            .width(width.dp)
+            .height(height.dp))
+    } else {
+        me()
     }
 }
 

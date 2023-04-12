@@ -3,12 +3,12 @@ package com.storyteller_f.bi.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +27,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.paging.cachedIn
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import bilibili.app.dynamic.v2.Desc
@@ -37,39 +38,44 @@ import bilibili.app.dynamic.v2.ModuleOuterClass
 import com.a10miaomiao.bilimiao.comm.network.request
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.storyteller_f.bi.OneCenter
+import com.storyteller_f.bi.StateView
 
 @Composable
 fun MomentsPage() {
     val viewModel = viewModel<MomentsViewModel>()
     val lazyPagingItems = viewModel.flow.collectAsLazyPagingItems()
-    when (val state = lazyPagingItems.loadState.refresh) {
-        is LoadState.Error -> OneCenter {
-            Text(text = state.error.localizedMessage ?: "")
-        }
-        else -> LazyColumn {
-            if (lazyPagingItems.loadState.refresh == LoadState.Loading) {
-                item {
-                    Text(
-                        text = "Waiting for items to load from the backend",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentWidth(Alignment.CenterHorizontally)
-                    )
-                }
-            }
+    StateView(state = lazyPagingItems.loadState.refresh) {
+        LazyColumn {
+            topRefreshing(lazyPagingItems)
             items(lazyPagingItems) {
                 MomentItem(it ?: MomentsPreviewProvider().values.first(), editMode = false)
             }
-            if (lazyPagingItems.loadState.append == LoadState.Loading) {
-                item {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentWidth(Alignment.CenterHorizontally)
-                    )
-                }
-            }
+            bottomAppending(lazyPagingItems)
+        }
+    }
+}
+
+fun <T : Any> LazyListScope.topRefreshing(lazyPagingItems: LazyPagingItems<T>) {
+    if (lazyPagingItems.loadState.refresh == LoadState.Loading) {
+        item {
+            Text(
+                text = "Waiting for items to load from the backend",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentWidth(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+fun <T : Any> LazyListScope.bottomAppending(lazyPagingItems: LazyPagingItems<T>) {
+    if (lazyPagingItems.loadState.append == LoadState.Loading) {
+        item {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentWidth(Alignment.CenterHorizontally)
+            )
         }
     }
 }
@@ -87,9 +93,7 @@ class MomentsPreviewProvider : PreviewParameterProvider<DataInfo> {
                     90,
                     1,
                     DynamicContentInfo(
-                        "i",
-                        "title",
-                        pic = "https://i0.hdslb.com/bfs/face/member/noface.jpg"
+                        "i", "title", pic = "https://i0.hdslb.com/bfs/face/member/noface.jpg"
                     ),
                     Desc.ModuleDesc.getDefaultInstance()
                 )
@@ -102,16 +106,13 @@ class MomentsPreviewProvider : PreviewParameterProvider<DataInfo> {
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun MomentItem(
-    @PreviewParameter(MomentsPreviewProvider::class) dataInfo: DataInfo,
-    editMode: Boolean = true
+    @PreviewParameter(MomentsPreviewProvider::class) dataInfo: DataInfo, editMode: Boolean = true
 ) {
     val authorSize = Modifier.size(40.dp)
     Column {
         Row(modifier = Modifier.padding(8.dp)) {
-            if (editMode)
-                Box(modifier = authorSize)
-            else
-                GlideImage(model = dataInfo.face, contentDescription = "", modifier = authorSize)
+            if (editMode) Box(modifier = authorSize)
+            else GlideImage(model = dataInfo.face, contentDescription = "", modifier = authorSize)
             Column(modifier = Modifier.padding(start = 8.dp)) {
                 Text(text = dataInfo.name)
                 Text(text = dataInfo.labelText)
@@ -133,8 +134,7 @@ class MomentsViewModel : ViewModel() {
         PagingConfig(pageSize = 20)
     ) {
         MomentsPagingSource()
-    }.flow
-        .cachedIn(viewModelScope)
+    }.flow.cachedIn(viewModelScope)
 }
 
 data class DataInfo(
@@ -167,21 +167,15 @@ class MomentsPagingSource : PagingSource<Pair<String, String>, DataInfo>() {
             } else {
                 DynamicCommonOuterClass.Refresh.refresh_history
             }
-            val req = DynamicOuterClass.DynVideoReq.newBuilder()
-                .setRefreshType(type)
-                .setLocalTime(8)
-                .setOffset(offset)
-                .setUpdateBaseline(baseline)
-                .build()
+            val req =
+                DynamicOuterClass.DynVideoReq.newBuilder().setRefreshType(type).setLocalTime(8)
+                    .setOffset(offset).setUpdateBaseline(baseline).build()
 
-            val result = DynamicGrpc.getDynVideoMethod()
-                .request(req)
-                .awaitCall()
+            val result = DynamicGrpc.getDynVideoMethod().request(req).awaitCall()
             if (result.hasDynamicList()) {
                 val dynamicListData = result.dynamicList
                 val itemsList = dynamicListData.listList.filter { item ->
-                    item.cardType != DynamicCommonOuterClass.DynamicType.dyn_none
-                            && item.cardType != DynamicCommonOuterClass.DynamicType.ad
+                    item.cardType != DynamicCommonOuterClass.DynamicType.dyn_none && item.cardType != DynamicCommonOuterClass.DynamicType.ad
                 }.map { item ->
                     val modules = item.modulesList
                     val userModule = modules.first { it.hasModuleAuthor() }.moduleAuthor
@@ -201,14 +195,12 @@ class MomentsPagingSource : PagingSource<Pair<String, String>, DataInfo>() {
                     )
                 }
                 return LoadResult.Page(
-                    data = itemsList,
-                    prevKey = null, // Only paging forward.
+                    data = itemsList, prevKey = null, // Only paging forward.
                     nextKey = dynamicListData.historyOffset to dynamicListData.updateBaseline
                 )
             } else {
                 return LoadResult.Page(
-                    data = listOf(),
-                    prevKey = null, // Only paging forward.
+                    data = listOf(), prevKey = null, // Only paging forward.
                     nextKey = null
                 )
             }
@@ -251,6 +243,5 @@ class MomentsPagingSource : PagingSource<Pair<String, String>, DataInfo>() {
         return null
     }
 
-    companion object {
-    }
+    companion object {}
 }
