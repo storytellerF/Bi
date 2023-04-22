@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">bi</string>
     <string name="moments">moments</string>
-    <string name="history">history</string>
-    <string name="to_be_play">to be play</string>
+    <string name="histories">histories</string>
+    <string name="playlist">playlist</string>
+    <string name="favorite">favorite</string>
 </resources>

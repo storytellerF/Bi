@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun ToBePlayedPage() {
+fun PlaylistPage() {
     val context = LocalContext.current
     val viewModel = viewModel<ToBePlayedViewModel>()
     val state by viewModel.state.observeAsState()

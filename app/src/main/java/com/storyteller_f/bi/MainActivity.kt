@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -44,11 +45,12 @@ import androidx.navigation.compose.rememberNavController
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
+import com.storyteller_f.bi.components.FavoritePage
 import com.storyteller_f.bi.components.HistoryPage
 import com.storyteller_f.bi.components.HomeTopBar
 import com.storyteller_f.bi.components.MomentsPage
 import com.storyteller_f.bi.components.Screen
-import com.storyteller_f.bi.components.ToBePlayedPage
+import com.storyteller_f.bi.components.PlaylistPage
 import com.storyteller_f.bi.components.UserCenterDrawer
 import com.storyteller_f.bi.ui.theme.BiTheme
 import kotlinx.coroutines.launch
@@ -79,7 +81,8 @@ class MainActivity : ComponentActivity() {
             val items = listOf(
                 Screen.History,
                 Screen.Moments,
-                Screen.ToBePlay
+                Screen.Playlist,
+                Screen.Favorite
             )
             BiTheme {
                 ModalNavigationDrawer(
@@ -131,6 +134,13 @@ class MainActivity : ComponentActivity() {
                                     Text(text = stringResource(id = screen.resourceId))
                                 })
                             }
+                            NavigationBarItem(selected = false, onClick = {
+
+                            }, {
+                                Icon(ImageVector.vectorResource(id = R.drawable.baseline_history_24), contentDescription = null)
+                            }, label = {
+                                Text(text = "special")
+                            })
                         }
                     }) {
                         Surface(
@@ -153,9 +163,14 @@ class MainActivity : ComponentActivity() {
                                         MomentsPage()
                                     }
                                 }
-                                composable(Screen.ToBePlay.route) {
+                                composable(Screen.Playlist.route) {
                                     UserAware {
-                                        ToBePlayedPage()
+                                        PlaylistPage()
+                                    }
+                                }
+                                composable(Screen.Favorite.route) {
+                                    UserAware {
+                                        FavoritePage()
                                     }
                                 }
                             }
@@ -189,15 +204,21 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun StandBy(width: Int, height: Int, me: @Composable () -> Unit) {
+    StandBy(modifier = Modifier
+        .width(width.dp)
+        .height(height.dp), me)
+}
+
+@Composable
+fun StandBy(modifier: Modifier, me: @Composable () -> Unit) {
     val view = LocalView.current
     if (view.isInEditMode) {
-        Box(modifier = Modifier
-            .width(width.dp)
-            .height(height.dp))
+        Box(modifier.background(MaterialTheme.colorScheme.primaryContainer))
     } else {
         me()
     }
 }
+
 
 fun String.createQRImage(width: Int, height: Int): Bitmap {
     val bitMatrix = QRCodeWriter().encode(

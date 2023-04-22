@@ -9,4 +9,8 @@
 
 Material Design 的哔哩哔哩非官方客户端
 
+[![Android CI](https://github.com/storytellerF/bi/actions/workflows/android.yml/badge.svg)](https://github.com/storytellerF/bi/actions/workflows/android.yml)
+
+>没有release，可以下载自动构建的apk
+
 基于[bilimiao2](https://github.com/10miaomiao/bilimiao2) 制作，基于Jetpack Compose 构建（未来会迁移到KMM），以GPL 协议发布

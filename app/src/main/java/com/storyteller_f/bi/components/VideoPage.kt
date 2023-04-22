@@ -190,10 +190,16 @@ private fun VideoDescription(
         }
         if (!pages.isNullOrEmpty()) {
             LazyRow(modifier = Modifier.padding(top = 8.dp)) {
-                items(pages) {
-                    Text(text = "${it.part}  - ${it.page}", modifier = Modifier
-                        .background(MaterialTheme.colorScheme.tertiaryContainer)
-                        .padding(8.dp))
+                items(pages.size) {
+                    val pageDetail = pages[it]
+                    Text(
+                        text = "${pageDetail.part}  - ${pageDetail.page}",
+                        modifier = Modifier
+                            .apply {
+                                if (it != 0) padding(start = 8.dp)
+                            }
+                            .background(MaterialTheme.colorScheme.tertiaryContainer)
+                            .padding(8.dp))
                 }
             }
         }
