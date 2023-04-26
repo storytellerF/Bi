@@ -1,6 +1,7 @@
 package com.storyteller_f.bi.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
@@ -38,7 +39,7 @@ import com.storyteller_f.bi.userInfo
 import kotlinx.coroutines.launch
 
 @Composable
-fun FavoritePage() {
+fun FavoritePage(openMediaList: (MediaListInfo) -> Unit = {}) {
     val favoriteViewModel = viewModel<FavoriteViewModel>()
     val state by favoriteViewModel.state.observeAsState()
     val data by favoriteViewModel.data.observeAsState()
@@ -46,7 +47,7 @@ fun FavoritePage() {
         LazyVerticalGrid(GridCells.Adaptive(150.dp)) {
             data?.default_folder?.folder_detail?.let {
                 item {
-                    MediaListContainer(it)
+                    MediaListContainer(it, openMediaList)
                 }
             }
             data?.space_infos?.forEach {
@@ -57,7 +58,7 @@ fun FavoritePage() {
                 }
                 it.mediaListResponse.list?.let { list ->
                     items(list) { info ->
-                        MediaListContainer(mediaListInfo = info)
+                        MediaListContainer(mediaListInfo = info, openMediaList)
                     }
                 }
             }
@@ -76,8 +77,10 @@ class MediaListContainerPreviewProvider : PreviewParameterProvider<MediaListInfo
 @Preview
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun MediaListContainer(@PreviewParameter(MediaListContainerPreviewProvider::class) mediaListInfo: MediaListInfo) {
-    Box(contentAlignment = Alignment.Center) {
+fun MediaListContainer(@PreviewParameter(MediaListContainerPreviewProvider::class) mediaListInfo: MediaListInfo, openMediaList: (MediaListInfo) -> Unit = {}) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.clickable {
+        openMediaList(mediaListInfo)
+    }) {
         StandBy(width = 200, height = 100) {
             val u = UrlUtil.autoHttps(mediaListInfo.cover)
             GlideImage(

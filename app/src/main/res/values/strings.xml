@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">bi</string>
-    <string name="moments">moments</string>
-    <string name="histories">histories</string>
-    <string name="playlist">playlist</string>
-    <string name="favorite">favorite</string>
+    <string name="moments">Moments</string>
+    <string name="histories">Tistories</string>
+    <string name="playlist">Playlist</string>
+    <string name="favorite">Favorite</string>
+    <string name="search">Search</string>
 </resources>

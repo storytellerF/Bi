@@ -15,11 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,28 +26,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
+import com.storyteller_f.bi.components.FavoriteDetailPage
 import com.storyteller_f.bi.components.FavoritePage
 import com.storyteller_f.bi.components.HistoryPage
+import com.storyteller_f.bi.components.HomeNavigation
 import com.storyteller_f.bi.components.HomeTopBar
 import com.storyteller_f.bi.components.MomentsPage
-import com.storyteller_f.bi.components.Screen
 import com.storyteller_f.bi.components.PlaylistPage
+import com.storyteller_f.bi.components.Screen
 import com.storyteller_f.bi.components.UserCenterDrawer
 import com.storyteller_f.bi.ui.theme.BiTheme
 import kotlinx.coroutines.launch
@@ -70,6 +68,21 @@ class MainActivity : ComponentActivity() {
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val coroutineScope = rememberCoroutineScope()
             val navController = rememberNavController()
+            val selectRoute = { screen: Screen ->
+                navController.navigate(screen.route) {
+                    // Pop up to the start destination of the graph to
+                    // avoid building up a large stack of destinations
+                    // on the back stack as users select items
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    // Avoid multiple copies of the same destination when
+                    // reselecting the same item
+                    launchSingleTop = true
+                    // Restore state when reselecting a previously selected item
+                    restoreState = true
+                }
+            }
 
             val open = {
                 coroutineScope.launch {
@@ -78,12 +91,7 @@ class MainActivity : ComponentActivity() {
             }
             val user by userInfo.observeAsState()
             val u = user
-            val items = listOf(
-                Screen.History,
-                Screen.Moments,
-                Screen.Playlist,
-                Screen.Favorite
-            )
+
             BiTheme {
                 ModalNavigationDrawer(
                     drawerContent = {
@@ -97,51 +105,13 @@ class MainActivity : ComponentActivity() {
                         }
                     }, bottomBar = {
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
-                        val currentDestination = navBackStackEntry?.destination
-                        NavigationBar {
-                            items.forEach { screen ->
-                                val selected =
-                                    currentDestination?.hierarchy?.any { it.route == screen.route } == true
-                                NavigationBarItem(selected = selected, onClick = {
-                                    navController.navigate(screen.route) {
-                                        // Pop up to the start destination of the graph to
-                                        // avoid building up a large stack of destinations
-                                        // on the back stack as users select items
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        // Avoid multiple copies of the same destination when
-                                        // reselecting the same item
-                                        launchSingleTop = true
-                                        // Restore state when reselecting a previously selected item
-                                        restoreState = true
-                                    }
-                                }, {
-                                    when {
-                                        screen.icon != null -> {
-                                            Icon(
-                                                ImageVector.vectorResource(id = screen.icon),
-                                                contentDescription = screen.route
-                                            )
-                                        }
-
-                                        screen.vector != null -> Icon(
-                                            screen.vector,
-                                            contentDescription = screen.route
-                                        )
-                                    }
-                                }, label = {
-                                    Text(text = stringResource(id = screen.resourceId))
-                                })
-                            }
-                            NavigationBarItem(selected = false, onClick = {
-
-                            }, {
-                                Icon(ImageVector.vectorResource(id = R.drawable.baseline_history_24), contentDescription = null)
-                            }, label = {
-                                Text(text = "special")
-                            })
+                        val items = Screen.allRoute.map {
+                            it.route
                         }
+                        val any = navBackStackEntry?.destination?.hierarchy?.firstOrNull {
+                            items.contains(it.route)
+                        }?.route
+                        HomeNavigation(any, selectRoute)
                     }) {
                         Surface(
                             modifier = Modifier
@@ -170,7 +140,19 @@ class MainActivity : ComponentActivity() {
                                 }
                                 composable(Screen.Favorite.route) {
                                     UserAware {
-                                        FavoritePage()
+                                        FavoritePage {
+                                            navController.navigate(Screen.FavoriteList.route.replace("{id}", it.id))
+                                        }
+                                    }
+                                }
+                                composable(
+                                    Screen.FavoriteList.route,
+                                    arguments = listOf(navArgument("id") {
+                                        type = NavType.StringType
+                                    })
+                                ) {
+                                    UserAware {
+                                        FavoriteDetailPage(id = it.arguments?.getString("id").orEmpty())
                                     }
                                 }
                             }
@@ -204,9 +186,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun StandBy(width: Int, height: Int, me: @Composable () -> Unit) {
-    StandBy(modifier = Modifier
-        .width(width.dp)
-        .height(height.dp), me)
+    StandBy(
+        modifier = Modifier
+            .width(width.dp)
+            .height(height.dp), me
+    )
 }
 
 @Composable
