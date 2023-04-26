@@ -88,7 +88,7 @@ dependencies {
 
     def paging_version = "3.1.1"
 
-    implementation "androidx.paging:paging-runtime:$paging_version"
+    implementation "androidx.paging:paging-runtime-ktx:$paging_version"
     implementation "androidx.paging:paging-compose:1.0.0-alpha18"
     implementation("com.github.storytellerF.Bao:startup:2.1")
 }

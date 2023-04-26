@@ -91,7 +91,13 @@ class MainActivity : ComponentActivity() {
             }
             val user by userInfo.observeAsState()
             val u = user
-
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val items = Screen.allRoute.map {
+                it.route
+            }
+            val currentRoute = navBackStackEntry?.destination?.hierarchy?.firstOrNull {
+                items.contains(it.route)
+            }?.route
             BiTheme {
                 ModalNavigationDrawer(
                     drawerContent = {
@@ -104,14 +110,7 @@ class MainActivity : ComponentActivity() {
                             open()
                         }
                     }, bottomBar = {
-                        val navBackStackEntry by navController.currentBackStackEntryAsState()
-                        val items = Screen.allRoute.map {
-                            it.route
-                        }
-                        val any = navBackStackEntry?.destination?.hierarchy?.firstOrNull {
-                            items.contains(it.route)
-                        }?.route
-                        HomeNavigation(any, selectRoute)
+                        HomeNavigation(currentRoute, selectRoute)
                     }) {
                         Surface(
                             modifier = Modifier
@@ -141,7 +140,12 @@ class MainActivity : ComponentActivity() {
                                 composable(Screen.Favorite.route) {
                                     UserAware {
                                         FavoritePage {
-                                            navController.navigate(Screen.FavoriteList.route.replace("{id}", it.id))
+                                            navController.navigate(
+                                                Screen.FavoriteList.route.replace(
+                                                    "{id}",
+                                                    it.id
+                                                )
+                                            )
                                         }
                                     }
                                 }
@@ -152,7 +156,9 @@ class MainActivity : ComponentActivity() {
                                     })
                                 ) {
                                     UserAware {
-                                        FavoriteDetailPage(id = it.arguments?.getString("id").orEmpty())
+                                        FavoriteDetailPage(
+                                            id = it.arguments?.getString("id").orEmpty()
+                                        )
                                     }
                                 }
                             }

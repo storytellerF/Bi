@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.storyteller_f.bi.R
 
@@ -20,12 +21,20 @@ sealed class Screen(
     object Playlist : Screen("playlist", R.string.playlist, vector = Icons.Filled.PlayArrow)
     object Favorite : Screen("favorites", R.string.favorite, vector = Icons.Filled.Favorite)
 
-    object Search : Screen("search", R.string.search, icon = R.drawable.ic_launcher_foreground)
+    object Search : Screen("search", R.string.search, vector = Icons.Filled.Search)
 
     object FavoriteList : Screen("favorite-detail/{id}", R.string.favorite, vector = Icons.Filled.Favorite)
     companion object {
         val allRoute =
-            listOf(Screen.History, Screen.Moments, Screen.Playlist, Screen.Favorite, Screen.Search)
+            listOf(History, Moments, Playlist, Favorite, Search)
+
+        val bottomNavigationItems = listOf(
+            History,
+            Moments,
+            Playlist,
+            Favorite,
+            Search,
+        )
     }
 }
 
