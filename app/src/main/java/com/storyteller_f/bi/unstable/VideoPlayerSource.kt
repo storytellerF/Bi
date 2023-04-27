@@ -1,4 +1,4 @@
-package com.a10miaomiao.bilimiao.comm.delegate.player.model
+package com.storyteller_f.bi.unstable
 
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.PlayerSourceInfo
@@ -9,9 +9,6 @@ import com.a10miaomiao.bilimiao.comm.network.ApiHelper
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
-import com.a10miaomiao.bilimiao.comm.utils.CompressionTools
-import java.io.ByteArrayInputStream
-import java.io.InputStream
 
 class VideoPlayerSource(
     override val title: String,
@@ -67,7 +64,7 @@ class VideoPlayerSource(
                     )
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
         return emptyList()
@@ -87,7 +84,7 @@ class VideoPlayerSource(
                 )
                 method = MiaoHttp.POST
             }.awaitCall()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
     }

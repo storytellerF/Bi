@@ -51,6 +51,7 @@ import com.storyteller_f.bi.components.PlaylistPage
 import com.storyteller_f.bi.components.Screen
 import com.storyteller_f.bi.components.UserCenterDrawer
 import com.storyteller_f.bi.ui.theme.BiTheme
+import com.storyteller_f.bi.unstable.userInfo
 import kotlinx.coroutines.launch
 import java.util.Collections
 import java.util.stream.IntStream
@@ -68,8 +69,8 @@ class MainActivity : ComponentActivity() {
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val coroutineScope = rememberCoroutineScope()
             val navController = rememberNavController()
-            val selectRoute = { screen: Screen ->
-                navController.navigate(screen.route) {
+            val selectRoute = { destination: String ->
+                navController.navigate(destination) {
                     // Pop up to the start destination of the graph to
                     // avoid building up a large stack of destinations
                     // on the back stack as users select items
@@ -111,11 +112,11 @@ class MainActivity : ComponentActivity() {
                         }
                     }, bottomBar = {
                         HomeNavigation(currentRoute, selectRoute)
-                    }) {
+                    }) { paddingValues ->
                         Surface(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(it),
+                                .padding(paddingValues),
                             color = MaterialTheme.colorScheme.background
                         ) {
                             NavHost(
@@ -140,7 +141,7 @@ class MainActivity : ComponentActivity() {
                                 composable(Screen.Favorite.route) {
                                     UserAware {
                                         FavoritePage {
-                                            navController.navigate(
+                                            selectRoute(
                                                 Screen.FavoriteList.route.replace(
                                                     "{id}",
                                                     it.id

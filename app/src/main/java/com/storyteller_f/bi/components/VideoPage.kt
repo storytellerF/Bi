@@ -37,7 +37,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
-import com.a10miaomiao.bilimiao.comm.delegate.player.model.VideoPlayerSource
+import com.storyteller_f.bi.unstable.VideoPlayerSource
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
 import com.a10miaomiao.bilimiao.comm.entity.video.VideoInfo
 import com.a10miaomiao.bilimiao.comm.entity.video.VideoOwnerInfo
@@ -277,7 +277,7 @@ class VideoViewModel(private val videoId: String) : ViewModel() {
                 } else {
                     state.error(res.message)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 state.error(e)
             }
         }

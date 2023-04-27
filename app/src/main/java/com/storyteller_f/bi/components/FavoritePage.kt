@@ -35,7 +35,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
-import com.storyteller_f.bi.userInfo
+import com.storyteller_f.bi.unstable.userInfo
 import kotlinx.coroutines.launch
 
 @Composable
@@ -125,7 +125,7 @@ class FavoriteViewModel : ViewModel() {
                 } else {
                     state.error("找不到mid")
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 state.error(e)
             }
         }

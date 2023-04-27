@@ -10,7 +10,7 @@ import androidx.paging.LoadState
 
 sealed class LoadingState {
     class Loading(val state: String) : LoadingState()
-    class Error(val e: Exception) : LoadingState()
+    class Error(val e: Throwable) : LoadingState()
 
     object Done : LoadingState()
 }

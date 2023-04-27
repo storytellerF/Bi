@@ -2,6 +2,7 @@ package com.storyteller_f.bi
 
 import android.app.Application
 import com.a10miaomiao.bilimiao.comm.BilimiaoCommApp
+import com.storyteller_f.bi.unstable.readUserInfo
 
 class App: Application() {
 

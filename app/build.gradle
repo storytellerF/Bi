@@ -21,8 +21,14 @@ android {
     }
 
     buildTypes {
+//        debug {
+//            minifyEnabled true
+//            shrinkResources true
+//            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+//        }
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -90,5 +96,5 @@ dependencies {
 
     implementation "androidx.paging:paging-runtime-ktx:$paging_version"
     implementation "androidx.paging:paging-compose:1.0.0-alpha18"
-    implementation("com.github.storytellerF.Bao:startup:2.1")
+    implementation("com.github.storytellerF.Bao:startup:2.1.2")
 }

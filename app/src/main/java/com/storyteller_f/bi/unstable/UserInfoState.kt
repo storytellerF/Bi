@@ -1,4 +1,4 @@
-package com.storyteller_f.bi
+package com.storyteller_f.bi.unstable
 
 import android.content.Context
 import android.util.Log
@@ -33,7 +33,7 @@ fun Context.readUserInfo() {
             val localInfo = Gson().fromJson(jsonStr, UserInfo::class.java)
             userInfo.value = localInfo
         }
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         Log.e("UserInfoState", "readUserInfo: ", e)
     }
 }

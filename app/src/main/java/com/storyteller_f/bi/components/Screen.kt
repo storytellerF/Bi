@@ -17,7 +17,7 @@ sealed class Screen(
     @DrawableRes val icon: Int? = null
 ) {
     object History : Screen("histories", R.string.histories, icon = R.drawable.baseline_history_24)
-    object Moments : Screen("moments", R.string.moments, vector = Icons.Filled.Menu)
+    object Moments : Screen("moments", R.string.moments, icon = R.drawable.baseline_explore_24)
     object Playlist : Screen("playlist", R.string.playlist, vector = Icons.Filled.PlayArrow)
     object Favorite : Screen("favorites", R.string.favorite, vector = Icons.Filled.Favorite)
 
@@ -26,14 +26,13 @@ sealed class Screen(
     object FavoriteList : Screen("favorite-detail/{id}", R.string.favorite, vector = Icons.Filled.Favorite)
     companion object {
         val allRoute =
-            listOf(History, Moments, Playlist, Favorite, Search)
+            listOf(History, Moments, Playlist, Favorite, Search, FavoriteList)
 
         val bottomNavigationItems = listOf(
             History,
             Moments,
             Playlist,
             Favorite,
-            Search,
         )
     }
 }

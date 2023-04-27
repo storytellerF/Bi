@@ -1,5 +1,6 @@
 package com.storyteller_f.bi.components
 
+import Api
 import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.clickable
@@ -24,9 +25,7 @@ import androidx.paging.PagingState
 import androidx.paging.cachedIn
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
-import bilibili.app.interfaces.v1.HistoryGrpc
 import bilibili.app.interfaces.v1.HistoryOuterClass
-import com.a10miaomiao.bilimiao.comm.network.request
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -39,7 +38,7 @@ fun MutableLiveData<LoadingState>.loaded() {
     value = LoadingState.Done
 }
 
-fun MutableLiveData<LoadingState>.error(e: Exception) {
+fun MutableLiveData<LoadingState>.error(e: Throwable) {
     value = LoadingState.Error(e)
 }
 
@@ -154,29 +153,20 @@ class HistoryPagingSource : PagingSource<HistoryOuterClass.Cursor, HistoryOuterC
                 (params.key?.max ?: 0L) to (params.key?.maxTp ?: 0)
             } else 0L to 0
             Log.i(TAG, "load: $lastMax $lastTp")
-            val req = HistoryOuterClass.CursorV2Req.newBuilder().apply {
-                business = "archive"
-                cursor = HistoryOuterClass.Cursor.newBuilder().apply {
-                    if (lastMax != 0L) {
-                        max = lastMax
-                        maxTp = lastTp
-                    }
-                }.build()
-            }.build()
-            val res = HistoryGrpc.getCursorV2Method()
-                .request(req)
-                .awaitCall()
+            val res = Api.requestHistory(lastMax, lastTp)
+            Log.i(TAG, "load: ${res?.cursor}")
             return LoadResult.Page(
-                data = res.itemsList,
+                data = res?.itemsList.orEmpty(),
                 prevKey = null, // Only paging forward.
-                nextKey = res.cursor
+                nextKey = res?.cursor
             )
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Handle errors in this block and return LoadResult.Error if it is an
             // expected error (such as a network failure).
             return LoadResult.Error(e)
         }
     }
+
 
     override fun getRefreshKey(state: PagingState<HistoryOuterClass.Cursor, HistoryOuterClass.CursorItem>): HistoryOuterClass.Cursor? {
         return null

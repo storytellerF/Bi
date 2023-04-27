@@ -205,7 +205,7 @@ class MomentsPagingSource : PagingSource<Pair<String, String>, DataInfo>() {
                 )
             }
 
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Handle errors in this block and return LoadResult.Error if it is an
             // expected error (such as a network failure).
             return LoadResult.Error(e)

@@ -73,7 +73,7 @@ class ToBePlayedViewModel : ViewModel() {
                 } else {
                     state.error(Exception("code: ${gson.code} ${gson.message}"))
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 state.error(e)
             }
         }

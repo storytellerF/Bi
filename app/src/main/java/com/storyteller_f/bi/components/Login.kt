@@ -37,8 +37,8 @@ import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.createQRImage
-import com.storyteller_f.bi.saveUserInfo
-import com.storyteller_f.bi.userInfo
+import com.storyteller_f.bi.unstable.saveUserInfo
+import com.storyteller_f.bi.unstable.userInfo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -69,7 +69,7 @@ class QrcodeLoginViewModel(private val context: Application) : AndroidViewModel(
                 } else {
                     state.error(Exception(res.message))
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 e.printStackTrace()
                 state.error(e)
             }
