@@ -28,8 +28,15 @@ import com.storyteller_f.bi.VideoActivity
 object FavoriteIdKey : CreationExtras.Key<String>
 
 val defaultFactory = object : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-        return FavoriteDetailViewModel(extras.get(FavoriteIdKey)!!) as T
+        if (modelClass == FavoriteDetailViewModel::class.java) {
+            return FavoriteDetailViewModel(extras[FavoriteIdKey]!!) as T
+        }
+        if (modelClass == VideoViewModel::class.java) {
+            return VideoViewModel(extras[VideoIdKey]!!) as T
+        }
+        return super.create(modelClass, extras)
     }
 }
 

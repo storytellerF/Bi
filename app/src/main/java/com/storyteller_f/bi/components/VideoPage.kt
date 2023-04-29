@@ -2,11 +2,13 @@ package com.storyteller_f.bi.components
 
 import android.content.Context
 import android.text.format.DateUtils
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,14 +32,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
-import com.storyteller_f.bi.unstable.VideoPlayerSource
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
 import com.a10miaomiao.bilimiao.comm.entity.video.VideoInfo
 import com.a10miaomiao.bilimiao.comm.entity.video.VideoOwnerInfo
@@ -48,6 +48,7 @@ import com.a10miaomiao.bilimiao.comm.entity.video.VideoTagInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
 import com.a10miaomiao.bilimiao.comm.utils.BiliUrlMatcher
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem.fromUri
 import com.google.android.exoplayer2.source.MediaSource
@@ -57,75 +58,115 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.unstable.PlayerDelegate
+import com.storyteller_f.bi.unstable.VideoPlayerSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
 @Composable
-fun VideoPage(videoId: String = "") {
-    val videoViewModel = viewModel<VideoViewModel>(factory = object : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            @Suppress("UNCHECKED_CAST")
-            return VideoViewModel(extras[VideoIdKey]!!) as T
-        }
-    }, extras = MutableCreationExtras().apply {
-        set(VideoIdKey, videoId)
-    })
-    val current = LocalContext.current
+fun VideoPage(videoId: String = "", requestOrientation: (Boolean) -> Unit = {}) {
+    val videoViewModel =
+        viewModel<VideoViewModel>(factory = defaultFactory, extras = MutableCreationExtras().apply {
+            set(VideoIdKey, videoId)
+        })
+
+    /**
+     * 一般来说就是全屏的意思
+     */
+    var videoOnly by remember {
+        mutableStateOf(false)
+    }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val info by videoViewModel.info.observeAsState()
+    val uiControl = rememberSystemUiController()
+    val videoInfo by videoViewModel.info.observeAsState()
     val playerSourceState by videoViewModel.playerSource.observeAsState()
-    val rawState by videoViewModel.state.observeAsState()
+    val loadingState by videoViewModel.state.observeAsState()
     var mediaSourceState by remember {
         mutableStateOf<MediaSource?>(null)
     }
+    var progress by remember {
+        mutableStateOf(0L)
+    }
 
     val playerSource = playerSourceState
-    val mediaSource = mediaSourceState
     val player = remember {
-        ExoPlayer.Builder(current).build()
+        Log.d("VideoPage", "VideoPage() called create player")
+        ExoPlayer.Builder(context).build()
     }
+
     DisposableEffect(key1 = player, effect = {
+        Log.d("VideoPage", "VideoPage() called disposable")
         onDispose {
+            Log.d("VideoPage", "VideoPage() called dispose invoked")
+            progress = player.currentPosition
             scope.launch {
-                playerSourceState?.historyReport(player.currentPosition)
+                playerSource?.historyReport(player.currentPosition)
             }
             player.stop()
             player.release()
         }
     })
-    LaunchedEffect(key1 = playerSourceState) {
+    LaunchedEffect(key1 = playerSource) {
+        Log.d("VideoPage", "VideoPage() called try get source $playerSource")
         if (playerSource != null) {
             val sourceInfo = withContext(Dispatchers.IO) {
-                current.sourcePair(playerSource)
+                context.sourcePair(playerSource)
             }
             mediaSourceState = sourceInfo
         }
     }
-    StateView(state = rawState) {
+    Log.d("VideoPage", "VideoPage() called")
+    StateView(state = loadingState) {
+        Log.d("VideoPage", "VideoPage() called StateView")
+        val mediaSource = mediaSourceState
         Column {
-            Text(text = videoId)
+            if (!videoOnly)
+                Text(text = videoId)
             if (mediaSource != null) {
-                AndroidView(
-                    factory = {
-                        StyledPlayerView(it)
-                    }, modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(16f / 9)
-                ) {
-                    it.player = player
-                    player.addMediaSource(mediaSource)
-                    player.prepare()
-                    player.play()
-                    scope.launch {
-                        playerSource?.historyReport(player.currentPosition)
-                    }
+                Log.d("VideoPage", "VideoPage() called VideoView $progress")
+                VideoView(player, mediaSource, playerSource, progress) {
+                    progress = player.currentPosition
+                    videoOnly = it
+                    uiControl.isStatusBarVisible = !it
+                    uiControl.isNavigationBarVisible = !it
+                    requestOrientation(it)
                 }
-
             }
+            if (!videoOnly)
+                VideoDescription(videoInfo)
 
-            VideoDescription(info)
+        }
+    }
+}
+
+@Composable
+private fun VideoView(
+    player: ExoPlayer,
+    mediaSource: MediaSource,
+    playerSource: VideoPlayerSource?,
+    seekTo: Long,
+    requestVideoOnly: (Boolean) -> Unit = {}
+) {
+    val scope = rememberCoroutineScope()
+    AndroidView(
+        factory = {
+            StyledPlayerView(it)
+        }, modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9)
+    ) {
+        it.setFullscreenButtonClickListener {
+            requestVideoOnly(it)
+        }
+        it.player = player
+        player.addMediaSource(mediaSource)
+        player.prepare()
+        player.seekTo(seekTo)
+        player.play()
+        scope.launch {
+            playerSource?.historyReport(player.currentPosition)
         }
     }
 }
@@ -192,14 +233,15 @@ private fun VideoDescription(
             LazyRow(modifier = Modifier.padding(top = 8.dp)) {
                 items(pages.size) {
                     val pageDetail = pages[it]
-                    Text(
-                        text = "${pageDetail.part}  - ${pageDetail.page}",
-                        modifier = Modifier
-                            .apply {
-                                if (it != 0) padding(start = 8.dp)
-                            }
-                            .background(MaterialTheme.colorScheme.tertiaryContainer)
-                            .padding(8.dp))
+                    Column(modifier = Modifier
+                        .apply {
+                            if (it != 0) padding(start = 8.dp)
+                        }
+                        .background(MaterialTheme.colorScheme.tertiaryContainer)
+                        .padding(8.dp)) {
+                        Text(text = pageDetail.page.toString())
+                        Text(text = pageDetail.part, modifier = Modifier.widthIn(max = 200.dp))
+                    }
                 }
             }
         }

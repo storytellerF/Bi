@@ -28,7 +28,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".LoginActivity" />
-        <activity android:name=".VideoActivity" />
+        <activity
+            android:name=".VideoActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
     </application>
 
 </manifest>

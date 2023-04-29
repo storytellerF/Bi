@@ -35,9 +35,9 @@ fun PlaylistPage() {
             items(data, {
                 it.aid.toString() + " " + it.bvid
             }) {
-                VideoItem(it.pic, it.title, it.desc) {
+                VideoItem(it.pic, it.title, "${it.aid} ${it.bvid} ${it.cid} ${it.tid}") {
                     context.startActivity(Intent(context, VideoActivity::class.java).apply {
-                        putExtra("videoId", it.tid.toString())
+                        putExtra("videoId", it.bvid)
                     })
                 }
             }
@@ -83,6 +83,9 @@ class ToBePlayedViewModel : ViewModel() {
 data class VideoDatum(
     val aid: Long,
     val videos: Int,
+    /**
+     * 分区id
+     */
     val tid: Long,
     val tname: String,
     val copyright: Int,

@@ -93,7 +93,7 @@ fun HistoryItem(
 ) {
     val current = LocalContext.current
     val text = item.title
-    val label = item.dt.type.name
+    val label = "${item.oid} ${item.kid}"
     VideoItem(item.cover(), text, label) {
         current.startActivity(Intent(current, VideoActivity::class.java).apply {
             putExtra("videoId", item.oid.toString())
