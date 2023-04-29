@@ -65,7 +65,7 @@ import kotlinx.coroutines.withContext
 
 
 @Composable
-fun VideoPage(videoId: String = "", requestOrientation: (Boolean) -> Unit = {}) {
+fun VideoPage(videoId: String = "", requestOrientation: ((Boolean) -> Unit)? = null) {
     val videoViewModel =
         viewModel<VideoViewModel>(factory = defaultFactory, extras = MutableCreationExtras().apply {
             set(VideoIdKey, videoId)
@@ -110,12 +110,13 @@ fun VideoPage(videoId: String = "", requestOrientation: (Boolean) -> Unit = {}) 
     })
     LaunchedEffect(key1 = playerSource) {
         Log.d("VideoPage", "VideoPage() called try get source $playerSource")
-        if (playerSource != null) {
+        playerSource?.let {
             val sourceInfo = withContext(Dispatchers.IO) {
-                context.sourcePair(playerSource)
+                context.sourcePair(it)
             }
             mediaSourceState = sourceInfo
         }
+
     }
     Log.d("VideoPage", "VideoPage() called")
     StateView(state = loadingState) {
@@ -126,13 +127,14 @@ fun VideoPage(videoId: String = "", requestOrientation: (Boolean) -> Unit = {}) 
                 Text(text = videoId)
             if (mediaSource != null) {
                 Log.d("VideoPage", "VideoPage() called VideoView $progress")
-                VideoView(player, mediaSource, playerSource, progress) {
-                    progress = player.currentPosition
-                    videoOnly = it
-                    uiControl.isStatusBarVisible = !it
-                    uiControl.isNavigationBarVisible = !it
-                    requestOrientation(it)
-                }
+                VideoView(player, mediaSource, playerSource, progress,
+                    if (requestOrientation != null) { it: Boolean ->
+                        progress = player.currentPosition
+                        videoOnly = it
+                        uiControl.isStatusBarVisible = !it
+                        uiControl.isNavigationBarVisible = !it
+                        requestOrientation.invoke(it)
+                    } else null)
             }
             if (!videoOnly)
                 VideoDescription(videoInfo)
@@ -147,7 +149,7 @@ private fun VideoView(
     mediaSource: MediaSource,
     playerSource: VideoPlayerSource?,
     seekTo: Long,
-    requestVideoOnly: (Boolean) -> Unit = {}
+    requestVideoOnly: ((Boolean) -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     AndroidView(
@@ -157,8 +159,10 @@ private fun VideoView(
             .fillMaxWidth()
             .aspectRatio(16f / 9)
     ) {
-        it.setFullscreenButtonClickListener {
-            requestVideoOnly(it)
+        if (requestVideoOnly != null) {
+            it.setFullscreenButtonClickListener { fullscreen ->
+                requestVideoOnly(fullscreen)
+            }
         }
         it.player = player
         player.addMediaSource(mediaSource)

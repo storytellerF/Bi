@@ -8,23 +8,37 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -32,12 +46,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.a10miaomiao.bilimiao.comm.entity.user.UserInfo
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
@@ -47,9 +63,11 @@ import com.storyteller_f.bi.components.HistoryPage
 import com.storyteller_f.bi.components.HomeNavigation
 import com.storyteller_f.bi.components.HomeTopBar
 import com.storyteller_f.bi.components.MomentsPage
+import com.storyteller_f.bi.components.NavItemIcon
 import com.storyteller_f.bi.components.PlaylistPage
 import com.storyteller_f.bi.components.Screen
 import com.storyteller_f.bi.components.UserCenterDrawer
+import com.storyteller_f.bi.components.VideoPage
 import com.storyteller_f.bi.ui.theme.BiTheme
 import com.storyteller_f.bi.unstable.userInfo
 import kotlinx.coroutines.launch
@@ -61,13 +79,11 @@ class MainActivity : ComponentActivity() {
         private const val TAG = "MainActivity"
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            val drawerState = rememberDrawerState(DrawerValue.Closed)
-            val coroutineScope = rememberCoroutineScope()
             val navController = rememberNavController()
             val selectRoute = { destination: String ->
                 navController.navigate(destination) {
@@ -85,90 +101,180 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            val open = {
-                coroutineScope.launch {
-                    drawerState.open()
-                }
-            }
+
             val user by userInfo.observeAsState()
-            val u = user
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val items = Screen.allRoute.map {
                 it.route
             }
+            val context = LocalContext.current
             val currentRoute = navBackStackEntry?.destination?.hierarchy?.firstOrNull {
                 items.contains(it.route)
             }?.route
+            var adaptiveVideo by remember {
+                mutableStateOf<String?>(null)
+            }
             BiTheme {
-                ModalNavigationDrawer(
-                    drawerContent = {
-                        UserCenterDrawer(userInfo = u)
-                    },
-                    drawerState = drawerState
-                ) {
-                    Scaffold(topBar = {
-                        HomeTopBar {
-                            open()
-                        }
-                    }, bottomBar = {
-                        HomeNavigation(currentRoute, selectRoute)
-                    }) { paddingValues ->
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(paddingValues),
-                            color = MaterialTheme.colorScheme.background
-                        ) {
+                val calculateWindowSizeClass = calculateWindowSizeClass(this)
+                when (calculateWindowSizeClass.widthSizeClass) {
+                    WindowWidthSizeClass.Compact -> {
+                        CompatContent(userInfo = user, currentRoute, selectRoute) {
                             NavHost(
                                 navController = navController,
                                 startDestination = Screen.History.route
                             ) {
-                                composable(Screen.History.route) {
-                                    UserAware {
-                                        HistoryPage()
-                                    }
+                                HomeNav(selectRoute) {
+                                    context.startActivity(
+                                        Intent(
+                                            context,
+                                            VideoActivity::class.java
+                                        ).apply {
+                                            putExtra("videoId", it)
+                                        })
                                 }
-                                composable(Screen.Moments.route) {
-                                    UserAware {
-                                        MomentsPage()
-                                    }
+                            }
+                        }
+                    }
+
+                    WindowWidthSizeClass.Medium -> {
+                        Row(modifier = Modifier.statusBarsPadding()) {
+                            NavigationRail {
+                                Screen.bottomNavigationItems.forEach {
+                                    NavigationRailItem(
+                                        selected = currentRoute == it.route,
+                                        onClick = { selectRoute(it.route) },
+                                        icon = { NavItemIcon(screen = it) })
                                 }
-                                composable(Screen.Playlist.route) {
-                                    UserAware {
-                                        PlaylistPage()
-                                    }
+                            }
+                            NavHost(
+                                navController = navController,
+                                startDestination = Screen.History.route,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                HomeNav(selectRoute) {
+                                    adaptiveVideo = it
                                 }
-                                composable(Screen.Favorite.route) {
-                                    UserAware {
-                                        FavoritePage {
-                                            selectRoute(
-                                                Screen.FavoriteList.route.replace(
-                                                    "{id}",
-                                                    it.id
-                                                )
-                                            )
-                                        }
-                                    }
+                            }
+                            adaptiveVideo?.let {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    VideoPage(it)
                                 }
-                                composable(
-                                    Screen.FavoriteList.route,
-                                    arguments = listOf(navArgument("id") {
-                                        type = NavType.StringType
-                                    })
+                            }
+                        }
+                    }
+
+                    WindowWidthSizeClass.Expanded -> {
+                        PermanentNavigationDrawer(drawerContent = {
+                            PermanentDrawerSheet {
+                                UserCenterDrawer()
+                            }
+                        }) {
+                            Row(modifier = Modifier.statusBarsPadding()) {
+                                NavHost(
+                                    navController = navController,
+                                    startDestination = Screen.History.route
                                 ) {
-                                    UserAware {
-                                        FavoriteDetailPage(
-                                            id = it.arguments?.getString("id").orEmpty()
-                                        )
+                                    HomeNav(selectRoute) {
+                                        adaptiveVideo = it
+                                    }
+                                }
+                                adaptiveVideo?.let {
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        VideoPage(it)
                                     }
                                 }
                             }
 
                         }
                     }
-
                 }
 
+            }
+        }
+    }
+
+    @Composable
+    private fun CompatContent(
+        userInfo: UserInfo?,
+        currentRoute: String?,
+        selectRoute: (String) -> Unit = {},
+        content: @Composable () -> Unit
+    ) {
+        val drawerState = rememberDrawerState(DrawerValue.Closed)
+        val coroutineScope = rememberCoroutineScope()
+
+        val open = {
+            coroutineScope.launch {
+                drawerState.open()
+            }
+        }
+        ModalNavigationDrawer(
+            drawerContent = {
+                UserCenterDrawer(userInfo = userInfo)
+            },
+            drawerState = drawerState
+        ) {
+            Scaffold(topBar = {
+                HomeTopBar {
+                    open()
+                }
+            }, bottomBar = {
+                HomeNavigation(currentRoute, selectRoute)
+            }) { paddingValues ->
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    content()
+                }
+            }
+
+        }
+    }
+
+    private fun NavGraphBuilder.HomeNav(
+        selectRoute: (String) -> Unit,
+        openVideo: (String) -> Unit
+    ) {
+        composable(Screen.History.route) {
+            UserAware {
+                HistoryPage(openVideo)
+            }
+        }
+        composable(Screen.Moments.route) {
+            UserAware {
+                MomentsPage()
+            }
+        }
+        composable(Screen.Playlist.route) {
+            UserAware {
+                PlaylistPage(openVideo)
+            }
+        }
+        composable(Screen.Favorite.route) {
+            UserAware {
+                FavoritePage {
+                    selectRoute(
+                        Screen.FavoriteList.route.replace(
+                            "{id}",
+                            it.id
+                        )
+                    )
+                }
+            }
+        }
+        composable(
+            Screen.FavoriteList.route,
+            arguments = listOf(navArgument("id") {
+                type = NavType.StringType
+            })
+        ) {
+            UserAware {
+                FavoriteDetailPage(
+                    id = it.arguments?.getString("id").orEmpty()
+                )
             }
         }
     }

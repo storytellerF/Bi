@@ -21,22 +21,27 @@ fun HomeNavigation(
             NavigationBarItem(selected = currentRoute == screen.route, onClick = {
                 selectRoute(screen.route)
             }, {
-                when {
-                    screen.icon != null -> {
-                        Icon(
-                            ImageVector.vectorResource(id = screen.icon),
-                            contentDescription = screen.route
-                        )
-                    }
-
-                    screen.vector != null -> Icon(
-                        screen.vector,
-                        contentDescription = screen.route
-                    )
-                }
+                NavItemIcon(screen)
             }, label = {
                 Text(text = stringResource(id = screen.resourceId))
             })
         }
+    }
+}
+
+@Composable
+fun NavItemIcon(screen: Screen) {
+    when {
+        screen.icon != null -> {
+            Icon(
+                ImageVector.vectorResource(id = screen.icon),
+                contentDescription = screen.route
+            )
+        }
+
+        screen.vector != null -> Icon(
+            screen.vector,
+            contentDescription = screen.route
+        )
     }
 }

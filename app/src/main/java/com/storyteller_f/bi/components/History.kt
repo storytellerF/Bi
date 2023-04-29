@@ -63,7 +63,7 @@ class HistoryViewModel : ViewModel() {
 }
 
 @Composable
-fun HistoryPage() {
+fun HistoryPage(openVideo: (String) -> Unit = {}) {
     val viewModel = viewModel<HistoryViewModel>()
     val lazyItems = viewModel.flow.collectAsLazyPagingItems()
     StateView(state = lazyItems.loadState.refresh) {
@@ -71,7 +71,7 @@ fun HistoryPage() {
             items(lazyItems, {
                 it.oid.toString() + "" + it.kid.toString()
             }) { item ->
-                HistoryItem(item ?: HistoryOuterClass.CursorItem.getDefaultInstance())
+                HistoryItem(item ?: HistoryOuterClass.CursorItem.getDefaultInstance(), openVideo)
             }
             bottomAppending(lazyItems)
         }
@@ -90,14 +90,12 @@ class VideoItemProvider : PreviewParameterProvider<HistoryOuterClass.CursorItem>
 @Composable
 fun HistoryItem(
     @PreviewParameter(VideoItemProvider::class) item: HistoryOuterClass.CursorItem,
+    openVideo: (String) -> Unit
 ) {
-    val current = LocalContext.current
     val text = item.title
     val label = "${item.oid} ${item.kid}"
     VideoItem(item.cover(), text, label) {
-        current.startActivity(Intent(current, VideoActivity::class.java).apply {
-            putExtra("videoId", item.oid.toString())
-        })
+        openVideo(item.oid.toString())
     }
 }
 

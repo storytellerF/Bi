@@ -1,12 +1,10 @@
 package com.storyteller_f.bi.components
 
-import android.content.Intent
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,14 +16,12 @@ import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StateView
-import com.storyteller_f.bi.VideoActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun PlaylistPage() {
-    val context = LocalContext.current
+fun PlaylistPage(openVideo: (String) -> Unit = {}) {
     val viewModel = viewModel<ToBePlayedViewModel>()
     val state by viewModel.state.observeAsState()
     val list by viewModel.datum.observeAsState()
@@ -36,9 +32,7 @@ fun PlaylistPage() {
                 it.aid.toString() + " " + it.bvid
             }) {
                 VideoItem(it.pic, it.title, "${it.aid} ${it.bvid} ${it.cid} ${it.tid}") {
-                    context.startActivity(Intent(context, VideoActivity::class.java).apply {
-                        putExtra("videoId", it.bvid)
-                    })
+                    openVideo(it.bvid)
                 }
             }
         }
