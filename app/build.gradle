@@ -106,9 +106,9 @@ def checkUnstableCode = tasks.register("unstableCodeCheck") {
     checkList.add(new String[]{"app/src/main/java/com/a10miaomiao/bilimiao/comm/delegate/player/model/VideoPlayerSource.kt", "92791523f7596d6ef31ab1011a184b60289ea074"})
     checkList.add(new String[]{"app/src/main/java/com/a10miaomiao/bilimiao/comm/delegate/player/PlayerDelegate2.kt", "c4e6218d5b6f8aa7828df6a4ec1f63922f63fe8b"})
     checkList.add(new String[]{"bilimiao-comm/src/main/java/com/a10miaomiao/bilimiao/comm/store/UserStore.kt", "ddc8ffca985dded2a14a5e61f16140fd7084e800"})
-    def strings = new String[]{"git", "--no-pager", "log", "-1", "--pretty=\"%H\"", "file"}
+    def strings = new String[]{"git", "--no-pager", "log", "-1", "--no-merges", "--pretty=\"%H\"", "file"}
     checkList.forEach {
-        strings[5] = it[0]
+        strings[6] = it[0]
         def exec = instance.exec(strings, new String[]{}, file("${rootDir.absolutePath}/bilimiao2"))
         def waitFor = exec.waitFor()
         def output = exec.inputStream.readLines().join("\n")
