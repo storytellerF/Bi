@@ -123,10 +123,10 @@ def checkUnstableCode = tasks.register("unstableCodeCheck") {
     }
     logger.info("unstable code check success")
 }
-
-afterEvaluate {
-    def debug = tasks.named("packageDebug")
-    def release = tasks.named("packageRelease")
-    debug.get().dependsOn(checkUnstableCode)
-    release.get().dependsOn(checkUnstableCode)
-}
+//ci 不可用
+//afterEvaluate {
+//    def debug = tasks.named("packageDebug")
+//    def release = tasks.named("packageRelease")
+//    debug.get().dependsOn(checkUnstableCode)
+//    release.get().dependsOn(checkUnstableCode)
+//}
