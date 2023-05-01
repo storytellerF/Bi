@@ -45,4 +45,26 @@ object Api {
             .awaitCall()
     }
 
+    suspend fun requestCommentDetail(
+        videoId: Long,
+        commentId: Long,
+        cursor: ReplyOuterClass.CursorReply?
+    ): ReplyOuterClass.DetailListReply? {
+        val req = ReplyOuterClass.DetailListReq.newBuilder().apply {
+            oid = videoId
+            root = commentId
+            type = 1
+            scene = ReplyOuterClass.DetailListScene.REPLY
+            cursor?.let {
+                this.cursor = ReplyOuterClass.CursorReq.newBuilder()
+                    .setPrev(it.prev)
+                    .setNext(it.next)
+                    .setMode(it.mode)
+                    .build()
+            }
+        }.build()
+        return ReplyGrpc.getDetailListMethod().request(req)
+            .awaitCall()
+    }
+
 }

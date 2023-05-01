@@ -4,6 +4,7 @@ import android.content.Context
 import android.text.format.DateUtils
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -41,14 +42,17 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.paging.cachedIn
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import bilibili.main.community.reply.v1.ReplyOuterClass
@@ -165,7 +169,18 @@ fun VideoPage(videoId: String = "", requestOrientation: ((Boolean) -> Unit)? = n
                         }
                     }
                     composable("comments") {
-                        CommentsPage(videoId)
+                        CommentsPage(videoId) {
+                            navController.navigate("comment/${videoId}/$it")
+                        }
+                    }
+                    composable("comment/{vid}/{cid}", arguments = listOf(navArgument("vid") {
+                        type = NavType.LongType
+                    }, navArgument("cid") {
+                        type = NavType.LongType
+                    })) {
+                        val vid = it.arguments?.getLong("vid")!!
+                        val cid = it.arguments?.getLong("cid")!!
+                        CommentReplyPage(cid = cid, oid = vid)
                     }
                 }
             }
@@ -313,6 +328,8 @@ private fun VideoDescription(
 }
 
 object VideoIdKey : CreationExtras.Key<String>
+object VideoIdLongKey : CreationExtras.Key<Long>
+object CommentIdKey : CreationExtras.Key<Long>
 
 class VideoViewModel(private val videoId: String) : ViewModel() {
     val state = MutableLiveData<LoadingState>()
@@ -417,19 +434,68 @@ class CommentSource(private val id: String) :
 
 }
 
+class CommentReplyViewModel(oid: Long, commentId: Long) : ViewModel() {
+    val flow = Pager(
+        // Configure how data is loaded by passing additional properties to
+        // PagingConfig, such as prefetchDistance.
+        PagingConfig(pageSize = 20)
+    ) {
+        CommentReplySource(oid, commentId)
+    }.flow
+        .cachedIn(viewModelScope)
+}
+
+class CommentReplySource(private val oid: Long, private val pid: Long) :
+    PagingSource<ReplyOuterClass.CursorReply, ReplyOuterClass.ReplyInfo>() {
+    override fun getRefreshKey(state: PagingState<ReplyOuterClass.CursorReply, ReplyOuterClass.ReplyInfo>): ReplyOuterClass.CursorReply? {
+        return null
+    }
+
+    override suspend fun load(params: LoadParams<ReplyOuterClass.CursorReply>): LoadResult<ReplyOuterClass.CursorReply, ReplyOuterClass.ReplyInfo> {
+        val key = params.key
+        return try {
+            val res = Api.requestCommentDetail(oid, pid, key)
+            LoadResult.Page(
+                data = res?.root?.repliesList.orEmpty(),
+                prevKey = null,
+                nextKey = res?.cursor
+            )
+        } catch (e: Exception) {
+            LoadResult.Error(e)
+        }
+    }
+
+}
+
+
 @Composable
-fun CommentsPage(videoId: String) {
+fun CommentsPage(videoId: String, viewComment: (Long) -> Unit = {}) {
     val data: CommentViewModel =
         viewModel(factory = defaultFactory, extras = MutableCreationExtras().apply {
             set(VideoIdKey, videoId)
         })
     val pagingItems = data.flow.collectAsLazyPagingItems()
+    CommentList(pagingItems, viewComment)
+}
+
+@Composable
+fun CommentReplyPage(cid: Long, oid: Long) {
+    val data: CommentReplyViewModel = viewModel(factory = defaultFactory, extras = MutableCreationExtras().apply {
+        set(CommentIdKey, cid)
+        set(VideoIdLongKey, oid)
+    })
+    val pagingItems = data.flow.collectAsLazyPagingItems()
+    CommentList(pagingItems = pagingItems)
+}
+
+@Composable
+private fun CommentList(pagingItems: LazyPagingItems<ReplyOuterClass.ReplyInfo>, viewComment: (Long) -> Unit = {}) {
     StateView(pagingItems.loadState.refresh) {
         LazyColumn {
             topRefreshing(pagingItems)
             items(pagingItems) {
                 val info = it ?: ReplyOuterClass.ReplyInfo.getDefaultInstance()
-                CommentItem(item = info)
+                CommentItem(item = info, viewComment)
             }
         }
     }
@@ -447,11 +513,14 @@ class CommentItemPreviewProvider : PreviewParameterProvider<ReplyOuterClass.Repl
 @Preview
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun CommentItem(@PreviewParameter(CommentItemPreviewProvider::class) item: ReplyOuterClass.ReplyInfo) {
+fun CommentItem(@PreviewParameter(CommentItemPreviewProvider::class) item: ReplyOuterClass.ReplyInfo, viewComment: (Long) -> Unit = {}) {
     Column(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
+            .clickable {
+                viewComment(item.id)
+            }
     ) {
         Row {
             StandBy(30, 30) {
@@ -461,8 +530,9 @@ fun CommentItem(@PreviewParameter(CommentItemPreviewProvider::class) item: Reply
                     modifier = Modifier.size(30.dp)
                 )
             }
-            Text(text = item.member.name)
+            Text(text = item.member.name, modifier = Modifier.padding(start = 8.dp))
         }
         Text(text = item.content.message, modifier = Modifier.padding(top = 8.dp))
+        Text(text = "reply to ${item.root}")
     }
 }

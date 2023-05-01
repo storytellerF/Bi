@@ -34,6 +34,7 @@ val defaultFactory = object : ViewModelProvider.Factory {
             FavoriteDetailViewModel::class.java -> FavoriteDetailViewModel(extras[FavoriteIdKey]!!) as T
             VideoViewModel::class.java -> VideoViewModel(extras[VideoIdKey]!!) as T
             CommentViewModel::class.java -> CommentViewModel(extras[VideoIdKey]!!) as T
+            CommentReplyViewModel::class.java -> CommentReplyViewModel(extras[VideoIdLongKey]!!, extras[CommentIdKey]!!) as T
             else -> super.create(modelClass, extras)
         }
     }
