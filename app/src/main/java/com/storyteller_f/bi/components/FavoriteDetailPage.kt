@@ -30,13 +30,12 @@ object FavoriteIdKey : CreationExtras.Key<String>
 val defaultFactory = object : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-        if (modelClass == FavoriteDetailViewModel::class.java) {
-            return FavoriteDetailViewModel(extras[FavoriteIdKey]!!) as T
+        return when (modelClass) {
+            FavoriteDetailViewModel::class.java -> FavoriteDetailViewModel(extras[FavoriteIdKey]!!) as T
+            VideoViewModel::class.java -> VideoViewModel(extras[VideoIdKey]!!) as T
+            CommentViewModel::class.java -> CommentViewModel(extras[VideoIdKey]!!) as T
+            else -> super.create(modelClass, extras)
         }
-        if (modelClass == VideoViewModel::class.java) {
-            return VideoViewModel(extras[VideoIdKey]!!) as T
-        }
-        return super.create(modelClass, extras)
     }
 }
 

@@ -1,7 +1,6 @@
 package com.storyteller_f.bi.components
 
-import Api
-import android.content.Intent
+import com.storyteller_f.bi.Api
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -32,7 +30,6 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
-import com.storyteller_f.bi.VideoActivity
 
 fun MutableLiveData<LoadingState>.loaded() {
     value = LoadingState.Done
@@ -71,7 +68,8 @@ fun HistoryPage(openVideo: (String) -> Unit = {}) {
             items(lazyItems, {
                 it.oid.toString() + "" + it.kid.toString()
             }) { item ->
-                HistoryItem(item ?: HistoryOuterClass.CursorItem.getDefaultInstance(), openVideo)
+                val cursorItem = item ?: HistoryOuterClass.CursorItem.getDefaultInstance()
+                HistoryItem(cursorItem, openVideo)
             }
             bottomAppending(lazyItems)
         }
@@ -121,7 +119,7 @@ fun VideoItem(
             GlideImage(u, contentDescription = null, modifier = coverModifier)
         }
         Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text(text = text)
+            Text(text = text, maxLines = 2)
             Text(text = label)
         }
     }

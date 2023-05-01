@@ -5,13 +5,17 @@ import android.text.format.DateUtils
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +41,17 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
+import androidx.paging.cachedIn
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
+import bilibili.main.community.reply.v1.ReplyOuterClass
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
 import com.a10miaomiao.bilimiao.comm.entity.video.VideoInfo
@@ -48,6 +63,9 @@ import com.a10miaomiao.bilimiao.comm.entity.video.VideoTagInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
 import com.a10miaomiao.bilimiao.comm.utils.BiliUrlMatcher
+import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem.fromUri
@@ -55,7 +73,9 @@ import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.StyledPlayerView
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
+import com.storyteller_f.bi.Api
 import com.storyteller_f.bi.LoadingState
+import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.unstable.PlayerDelegate
 import com.storyteller_f.bi.unstable.VideoPlayerSource
@@ -136,8 +156,19 @@ fun VideoPage(videoId: String = "", requestOrientation: ((Boolean) -> Unit)? = n
                         requestOrientation.invoke(it)
                     } else null)
             }
-            if (!videoOnly)
-                VideoDescription(videoInfo)
+            if (!videoOnly) {
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "description") {
+                    composable("description") {
+                        VideoDescription(videoInfo) {
+                            navController.navigate("comments")
+                        }
+                    }
+                    composable("comments") {
+                        CommentsPage(videoId)
+                    }
+                }
+            }
 
         }
     }
@@ -219,9 +250,14 @@ class VideoInfoPreviewProvider : PreviewParameterProvider<VideoInfo> {
 @Composable
 private fun VideoDescription(
     @PreviewParameter(VideoInfoPreviewProvider::class) info: VideoInfo?,
+    openComment: () -> Unit = {}
 ) {
     val pages = info?.pages
-    Column(modifier = Modifier.padding(8.dp)) {
+    Column(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth()
+    ) {
         val current = LocalContext.current
         Text(text = info?.title.orEmpty())
         val pubDate = info?.pubdate
@@ -268,6 +304,9 @@ private fun VideoDescription(
                     )
                 }
             }
+        }
+        Button(onClick = { openComment() }) {
+            Text(text = "open comments")
         }
     }
 
@@ -346,5 +385,84 @@ suspend fun Context.sourcePair(playerSource: BasePlayerSource): MediaSource {
             )
             ProgressiveMediaSource.Factory(factory).createMediaSource(fromUri(url))
         }
+    }
+}
+
+class CommentViewModel(oid: String) : ViewModel() {
+    val flow = Pager(
+        // Configure how data is loaded by passing additional properties to
+        // PagingConfig, such as prefetchDistance.
+        PagingConfig(pageSize = 20)
+    ) {
+        CommentSource(oid)
+    }.flow
+        .cachedIn(viewModelScope)
+}
+
+class CommentSource(private val id: String) :
+    PagingSource<ReplyOuterClass.CursorReply, ReplyOuterClass.ReplyInfo>() {
+    override fun getRefreshKey(state: PagingState<ReplyOuterClass.CursorReply, ReplyOuterClass.ReplyInfo>): ReplyOuterClass.CursorReply? {
+        return null
+    }
+
+    override suspend fun load(params: LoadParams<ReplyOuterClass.CursorReply>): LoadResult<ReplyOuterClass.CursorReply, ReplyOuterClass.ReplyInfo> {
+        val key = params.key
+        return try {
+            val res = Api.requestCommentList(id, cursor = key)
+            LoadResult.Page(res?.repliesList.orEmpty(), null, nextKey = res?.cursor)
+        } catch (e: Exception) {
+            LoadResult.Error(e)
+        }
+    }
+
+}
+
+@Composable
+fun CommentsPage(videoId: String) {
+    val data: CommentViewModel =
+        viewModel(factory = defaultFactory, extras = MutableCreationExtras().apply {
+            set(VideoIdKey, videoId)
+        })
+    val pagingItems = data.flow.collectAsLazyPagingItems()
+    StateView(pagingItems.loadState.refresh) {
+        LazyColumn {
+            topRefreshing(pagingItems)
+            items(pagingItems) {
+                val info = it ?: ReplyOuterClass.ReplyInfo.getDefaultInstance()
+                CommentItem(item = info)
+            }
+        }
+    }
+}
+
+class CommentItemPreviewProvider : PreviewParameterProvider<ReplyOuterClass.ReplyInfo> {
+    override val values: Sequence<ReplyOuterClass.ReplyInfo>
+        get() = sequence {
+            yield(ReplyOuterClass.ReplyInfo.getDefaultInstance())
+            yield(ReplyOuterClass.ReplyInfo.getDefaultInstance())
+        }
+
+}
+
+@Preview
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun CommentItem(@PreviewParameter(CommentItemPreviewProvider::class) item: ReplyOuterClass.ReplyInfo) {
+    Column(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth()
+    ) {
+        Row {
+            StandBy(30, 30) {
+                GlideImage(
+                    model = UrlUtil.autoHttps(item.member.face),
+                    contentDescription = "avatar",
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+            Text(text = item.member.name)
+        }
+        Text(text = item.content.message, modifier = Modifier.padding(top = 8.dp))
     }
 }

@@ -87,8 +87,7 @@ class UserBannerPreviewProvider : PreviewParameterProvider<UserInfo?> {
 @Composable
 fun UserBanner(@PreviewParameter(UserBannerPreviewProvider::class) u: UserInfo?) {
     val coverSize = Modifier
-        .width(60.dp)
-        .height(60.dp)
+        .size(60.dp)
     val modifier = Modifier.padding(start = 16.dp).fillMaxWidth()
     if (u != null) {
         val face = UrlUtil.autoHttps(u.face)
