@@ -426,7 +426,10 @@ class CommentSource(private val id: String) :
         val key = params.key
         return try {
             val res = Api.requestCommentList(id, cursor = key)
-            LoadResult.Page(res?.repliesList.orEmpty(), null, nextKey = res?.cursor)
+            LoadResult.Page(
+                res?.repliesList.orEmpty(),
+                null,
+                nextKey = res?.cursor?.takeIf { !it.isEnd })
         } catch (e: Exception) {
             LoadResult.Error(e)
         }
@@ -454,11 +457,11 @@ class CommentReplySource(private val oid: Long, private val pid: Long) :
     override suspend fun load(params: LoadParams<ReplyOuterClass.CursorReply>): LoadResult<ReplyOuterClass.CursorReply, ReplyOuterClass.ReplyInfo> {
         val key = params.key
         return try {
-            val res = Api.requestCommentDetail(oid, pid, key)
+            val res = Api.requestCommentReply(oid, pid, key)
             LoadResult.Page(
                 data = res?.root?.repliesList.orEmpty(),
                 prevKey = null,
-                nextKey = res?.cursor
+                nextKey = res?.cursor?.takeIf { !it.isEnd }
             )
         } catch (e: Exception) {
             LoadResult.Error(e)
@@ -475,28 +478,51 @@ fun CommentsPage(videoId: String, viewComment: (Long) -> Unit = {}) {
             set(VideoIdKey, videoId)
         })
     val pagingItems = data.flow.collectAsLazyPagingItems()
-    CommentList(pagingItems, viewComment)
+    CommentList(0, pagingItems, viewComment)
 }
 
 @Composable
 fun CommentReplyPage(cid: Long, oid: Long) {
-    val data: CommentReplyViewModel = viewModel(factory = defaultFactory, extras = MutableCreationExtras().apply {
-        set(CommentIdKey, cid)
-        set(VideoIdLongKey, oid)
-    })
+    val data: CommentReplyViewModel =
+        viewModel(factory = defaultFactory, extras = MutableCreationExtras().apply {
+            set(CommentIdKey, cid)
+            set(VideoIdLongKey, oid)
+        })
     val pagingItems = data.flow.collectAsLazyPagingItems()
-    CommentList(pagingItems = pagingItems)
+    CommentList(cid, pagingItems = pagingItems)
 }
 
 @Composable
-private fun CommentList(pagingItems: LazyPagingItems<ReplyOuterClass.ReplyInfo>, viewComment: (Long) -> Unit = {}) {
+private fun CommentList(
+    parent: Long,
+    pagingItems: LazyPagingItems<ReplyOuterClass.ReplyInfo>,
+    viewComment: (Long) -> Unit = {}
+) {
     StateView(pagingItems.loadState.refresh) {
         LazyColumn {
             topRefreshing(pagingItems)
             items(pagingItems) {
                 val info = it ?: ReplyOuterClass.ReplyInfo.getDefaultInstance()
-                CommentItem(item = info, viewComment)
+                CommentItem(item = info, viewComment, parent)
             }
+        }
+    }
+}
+
+class CommentReplyListPreviewProvider : PreviewParameterProvider<List<ReplyOuterClass.ReplyInfo>> {
+    override val values: Sequence<List<ReplyOuterClass.ReplyInfo>>
+        get() = sequence {
+            yield(CommentItemPreviewProvider().values.toList())
+        }
+
+}
+
+@Preview
+@Composable
+fun PreviewCommentReplyList(@PreviewParameter(CommentReplyListPreviewProvider::class) data: List<ReplyOuterClass.ReplyInfo>) {
+    Column {
+        data.forEach {
+            CommentItem(item = it)
         }
     }
 }
@@ -504,19 +530,35 @@ private fun CommentList(pagingItems: LazyPagingItems<ReplyOuterClass.ReplyInfo>,
 class CommentItemPreviewProvider : PreviewParameterProvider<ReplyOuterClass.ReplyInfo> {
     override val values: Sequence<ReplyOuterClass.ReplyInfo>
         get() = sequence {
-            yield(ReplyOuterClass.ReplyInfo.getDefaultInstance())
-            yield(ReplyOuterClass.ReplyInfo.getDefaultInstance())
+            yield(buildUserComment("不知名用户1"))
+            yield(buildUserComment("mock 2"))
+            yield(
+                buildUserComment(
+                    "you may not use this file except in compliance with the License. You may obtain a copy of the License at",
+                )
+            )
         }
+
+    private fun buildUserComment(userName: String, parent: Long = 0L) =
+        ReplyOuterClass.ReplyInfo.newBuilder()
+            .setMember(ReplyOuterClass.Member.newBuilder().setName(userName))
+            .setContent(ReplyOuterClass.Content.newBuilder().setMessage("评论消息内容"))
+            .setParent(parent)
+            .setLike(100).build()
 
 }
 
 @Preview
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun CommentItem(@PreviewParameter(CommentItemPreviewProvider::class) item: ReplyOuterClass.ReplyInfo, viewComment: (Long) -> Unit = {}) {
+fun CommentItem(
+    @PreviewParameter(CommentItemPreviewProvider::class) item: ReplyOuterClass.ReplyInfo,
+    viewComment: (Long) -> Unit = {},
+    parent: Long = 0,
+) {
     Column(
         modifier = Modifier
-            .padding(8.dp)
+            .padding(if (item.parent == parent) 8.dp else 16.dp)
             .fillMaxWidth()
             .clickable {
                 viewComment(item.id)
@@ -530,9 +572,16 @@ fun CommentItem(@PreviewParameter(CommentItemPreviewProvider::class) item: Reply
                     modifier = Modifier.size(30.dp)
                 )
             }
-            Text(text = item.member.name, modifier = Modifier.padding(start = 8.dp))
+            Text(
+                text = item.member.name,
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .weight(1f),
+                maxLines = 2
+            )
+            Text(text = "like ${item.like} reply ${item.count}")
         }
         Text(text = item.content.message, modifier = Modifier.padding(top = 8.dp))
-        Text(text = "reply to ${item.root}")
+        Text(text = "${item.parent} ${item.dialog} ${item.id} ${item.type}")
     }
 }

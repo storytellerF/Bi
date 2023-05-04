@@ -45,7 +45,7 @@ object Api {
             .awaitCall()
     }
 
-    suspend fun requestCommentDetail(
+    suspend fun requestCommentReply(
         videoId: Long,
         commentId: Long,
         cursor: ReplyOuterClass.CursorReply?
