@@ -86,10 +86,11 @@ import com.storyteller_f.bi.unstable.VideoPlayerSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.seconds
 
 
 @Composable
-fun VideoPage(videoId: String = "", requestOrientation: ((Boolean) -> Unit)? = null) {
+fun VideoPage(videoId: String = "", initProgress: Long, requestOrientation: ((Boolean) -> Unit)? = null) {
     val videoViewModel =
         viewModel<VideoViewModel>(factory = defaultFactory, extras = MutableCreationExtras().apply {
             set(VideoIdKey, videoId)
@@ -111,7 +112,7 @@ fun VideoPage(videoId: String = "", requestOrientation: ((Boolean) -> Unit)? = n
         mutableStateOf<MediaSource?>(null)
     }
     var progress by remember {
-        mutableStateOf(0L)
+        mutableStateOf(initProgress.coerceAtLeast(0L) .seconds.inWholeMilliseconds)
     }
 
     val playerSource = playerSourceState
@@ -126,7 +127,7 @@ fun VideoPage(videoId: String = "", requestOrientation: ((Boolean) -> Unit)? = n
             Log.d("VideoPage", "VideoPage() called dispose invoked")
             progress = player.currentPosition
             scope.launch {
-                playerSource?.historyReport(player.currentPosition)
+                playerSource?.historyReport(player.currentPosition / 1000)
             }
             player.stop()
             player.release()
@@ -512,7 +513,6 @@ private fun CommentList(
 class CommentReplyListPreviewProvider : PreviewParameterProvider<List<ReplyOuterClass.ReplyInfo>> {
     override val values: Sequence<List<ReplyOuterClass.ReplyInfo>>
         get() = sequence {
-
             yield(buildList {
                 add(buildUserComment("不知名用户1"))
                 add(buildUserComment("不知名用户2", parent = 1L))

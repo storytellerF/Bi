@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun PlaylistPage(openVideo: (String) -> Unit = {}) {
+fun PlaylistPage(openVideo: (String, Long) -> Unit = {_, _ ->}) {
     val viewModel = viewModel<ToBePlayedViewModel>()
     val state by viewModel.state.observeAsState()
     val list by viewModel.datum.observeAsState()
@@ -32,7 +32,7 @@ fun PlaylistPage(openVideo: (String) -> Unit = {}) {
                 it.aid.toString() + " " + it.bvid
             }) {
                 VideoItem(it.pic, it.title, "${it.aid} ${it.bvid} ${it.cid} ${it.tid}") {
-                    openVideo(it.bvid)
+                    openVideo(it.bvid, 0L)
                 }
             }
         }

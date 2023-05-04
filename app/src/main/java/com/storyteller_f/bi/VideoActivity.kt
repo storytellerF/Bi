@@ -16,10 +16,11 @@ class VideoActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() called with: savedInstanceState = $savedInstanceState")
         val videoId = intent.getStringExtra("videoId")!!
+        val progress = intent.getLongExtra("progress", 0L)
         setContent {
             BiTheme {
                 Surface {
-                    VideoPage(videoId) {
+                    VideoPage(videoId, progress) {
                         requestedOrientation =
                             if (it) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                     }

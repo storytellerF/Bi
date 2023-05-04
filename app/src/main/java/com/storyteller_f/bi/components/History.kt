@@ -1,6 +1,5 @@
 package com.storyteller_f.bi.components
 
-import com.storyteller_f.bi.Api
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,6 +26,7 @@ import bilibili.app.interfaces.v1.HistoryOuterClass
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.storyteller_f.bi.Api
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
@@ -60,7 +60,7 @@ class HistoryViewModel : ViewModel() {
 }
 
 @Composable
-fun HistoryPage(openVideo: (String) -> Unit = {}) {
+fun HistoryPage(openVideo: (String, Long) -> Unit = { _, _ -> }) {
     val viewModel = viewModel<HistoryViewModel>()
     val lazyItems = viewModel.flow.collectAsLazyPagingItems()
     StateView(state = lazyItems.loadState.refresh) {
@@ -76,6 +76,26 @@ fun HistoryPage(openVideo: (String) -> Unit = {}) {
     }
 }
 
+fun HistoryOuterClass.CursorItem.type(): String {
+    return when {
+        hasCardUgc() -> "ugc"
+        hasCardOgv() -> "ogc"
+        hasCardArticle() -> "article"
+        hasCardLive() -> "live"
+        else -> "cheese"
+    }
+}
+
+fun HistoryOuterClass.CursorItem.progress(): Long {
+    return when {
+        hasCardUgc() -> cardUgc.progress
+        hasCardOgv() -> cardOgv.progress
+        hasCardArticle() -> 0L
+        hasCardLive() -> 0L
+        else -> cardCheese.progress
+    }
+}
+
 class VideoItemProvider : PreviewParameterProvider<HistoryOuterClass.CursorItem> {
     override val values: Sequence<HistoryOuterClass.CursorItem>
         get() = sequence {
@@ -88,12 +108,13 @@ class VideoItemProvider : PreviewParameterProvider<HistoryOuterClass.CursorItem>
 @Composable
 fun HistoryItem(
     @PreviewParameter(VideoItemProvider::class) item: HistoryOuterClass.CursorItem,
-    openVideo: (String) -> Unit
+    openVideo: (String, Long) -> Unit
 ) {
     val text = item.title
-    val label = "${item.oid} ${item.kid}"
+    val progress = item.progress()
+    val label = "${item.oid} ${item.kid} ${item.type()} $progress"
     VideoItem(item.cover(), text, label) {
-        openVideo(item.oid.toString())
+        openVideo(item.oid.toString(), progress)
     }
 }
 

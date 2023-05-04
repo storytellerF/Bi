@@ -72,9 +72,7 @@ import java.util.Collections
 import java.util.stream.IntStream
 
 class MainActivity : ComponentActivity() {
-    companion object {
-        private const val TAG = "MainActivity"
-    }
+    companion object
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,6 +109,9 @@ class MainActivity : ComponentActivity() {
             var adaptiveVideo by remember {
                 mutableStateOf<String?>(null)
             }
+            var initProgress by remember {
+                mutableStateOf(0L)
+            }
             BiTheme {
                 val calculateWindowSizeClass = calculateWindowSizeClass(this)
                 when (calculateWindowSizeClass.widthSizeClass) {
@@ -120,13 +121,14 @@ class MainActivity : ComponentActivity() {
                                 navController = navController,
                                 startDestination = Screen.History.route
                             ) {
-                                HomeNav(selectRoute) {
+                                homeNav(selectRoute) { it, progress ->
                                     context.startActivity(
                                         Intent(
                                             context,
                                             VideoActivity::class.java
                                         ).apply {
                                             putExtra("videoId", it)
+                                            putExtra("progress", progress)
                                         })
                                 }
                             }
@@ -148,13 +150,14 @@ class MainActivity : ComponentActivity() {
                                 startDestination = Screen.History.route,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                HomeNav(selectRoute) {
+                                homeNav(selectRoute) { it, progress ->
                                     adaptiveVideo = it
+                                    initProgress = progress
                                 }
                             }
                             adaptiveVideo?.let {
                                 Box(modifier = Modifier.weight(1f)) {
-                                    VideoPage(it)
+                                    VideoPage(it, initProgress)
                                 }
                             }
                         }
@@ -171,13 +174,14 @@ class MainActivity : ComponentActivity() {
                                     navController = navController,
                                     startDestination = Screen.History.route
                                 ) {
-                                    HomeNav(selectRoute) {
+                                    homeNav(selectRoute) { it, progress ->
                                         adaptiveVideo = it
+                                        initProgress = progress
                                     }
                                 }
                                 adaptiveVideo?.let {
                                     Box(modifier = Modifier.weight(1f)) {
-                                        VideoPage(it)
+                                        VideoPage(it, initProgress)
                                     }
                                 }
                             }
@@ -231,9 +235,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun NavGraphBuilder.HomeNav(
+    private fun NavGraphBuilder.homeNav(
         selectRoute: (String) -> Unit,
-        openVideo: (String) -> Unit
+        openVideo: (String, Long) -> Unit
     ) {
         composable(Screen.History.route) {
             UserAware {
