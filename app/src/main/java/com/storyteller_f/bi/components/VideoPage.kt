@@ -512,17 +512,22 @@ private fun CommentList(
 class CommentReplyListPreviewProvider : PreviewParameterProvider<List<ReplyOuterClass.ReplyInfo>> {
     override val values: Sequence<List<ReplyOuterClass.ReplyInfo>>
         get() = sequence {
-            yield(CommentItemPreviewProvider().values.toList())
+
+            yield(buildList {
+                add(buildUserComment("不知名用户1"))
+                add(buildUserComment("不知名用户2", parent = 1L))
+                add(buildUserComment("不知名用户3"))
+            })
         }
 
 }
 
 @Preview
 @Composable
-fun PreviewCommentReplyList(@PreviewParameter(CommentReplyListPreviewProvider::class) data: List<ReplyOuterClass.ReplyInfo>) {
+private fun PreviewCommentReplyList(@PreviewParameter(CommentReplyListPreviewProvider::class) data: List<ReplyOuterClass.ReplyInfo>) {
     Column {
         data.forEach {
-            CommentItem(item = it)
+            CommentItem(item = it, parent = 0L)
         }
     }
 }
@@ -539,14 +544,15 @@ class CommentItemPreviewProvider : PreviewParameterProvider<ReplyOuterClass.Repl
             )
         }
 
-    private fun buildUserComment(userName: String, parent: Long = 0L) =
-        ReplyOuterClass.ReplyInfo.newBuilder()
-            .setMember(ReplyOuterClass.Member.newBuilder().setName(userName))
-            .setContent(ReplyOuterClass.Content.newBuilder().setMessage("评论消息内容"))
-            .setParent(parent)
-            .setLike(100).build()
 
 }
+
+private fun buildUserComment(userName: String, parent: Long = 0L) =
+    ReplyOuterClass.ReplyInfo.newBuilder()
+        .setMember(ReplyOuterClass.Member.newBuilder().setName(userName))
+        .setContent(ReplyOuterClass.Content.newBuilder().setMessage("评论消息内容"))
+        .setParent(parent)
+        .setLike(100).build()
 
 @Preview
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -558,7 +564,8 @@ fun CommentItem(
 ) {
     Column(
         modifier = Modifier
-            .padding(if (item.parent == parent) 8.dp else 16.dp)
+            .padding(8.dp)
+            .padding(start = if (parent == item.parent) 0.dp else 24.dp)
             .fillMaxWidth()
             .clickable {
                 viewComment(item.id)
