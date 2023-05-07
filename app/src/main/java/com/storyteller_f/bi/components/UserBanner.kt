@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -88,7 +87,9 @@ class UserBannerPreviewProvider : PreviewParameterProvider<UserInfo?> {
 fun UserBanner(@PreviewParameter(UserBannerPreviewProvider::class) u: UserInfo?) {
     val coverSize = Modifier
         .size(60.dp)
-    val modifier = Modifier.padding(start = 16.dp).fillMaxWidth()
+    val modifier = Modifier
+        .padding(start = 16.dp)
+        .fillMaxWidth()
     if (u != null) {
         val face = UrlUtil.autoHttps(u.face)
         Column {
@@ -98,14 +99,26 @@ fun UserBanner(@PreviewParameter(UserBannerPreviewProvider::class) u: UserInfo?)
                         model = face, contentDescription = "avatar", modifier = coverSize
                     )
                 }
-                Text(text = u.name, modifier = Modifier.padding(start = 8.dp))
-                Box(modifier = Modifier.size(16.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
-                    Text(text = if( u.sex == 1) "F" else "M", fontSize = 8.sp)
-                }
+                Text(text = u.name, modifier = Modifier.padding(start = 8.dp), style = MaterialTheme.typography.headlineSmall)
+                Spacer(modifier = Modifier.size(8.dp))
+                Dot(s = if( u.sex == 1) "M" else "F")
+                Spacer(modifier = Modifier.size(8.dp))
+                Dot(u.level.toString())
             }
             Row(modifier = Modifier.padding(8.dp)) {
-                Text(text = "follower ${u.follower}", modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)).padding(8.dp))
-                Text(text = "following ${u.following}", modifier = Modifier.padding(start = 8.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)).padding(8.dp))
+                Text(text = "follower ${u.follower}", modifier = Modifier
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer,
+                        RoundedCornerShape(16.dp)
+                    )
+                    .padding(8.dp))
+                Text(text = "following ${u.following}", modifier = Modifier
+                    .padding(start = 8.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer,
+                        RoundedCornerShape(16.dp)
+                    )
+                    .padding(8.dp))
             }
         }
     } else {
@@ -118,6 +131,20 @@ fun UserBanner(@PreviewParameter(UserBannerPreviewProvider::class) u: UserInfo?)
                 Text(text = "login")
             }
         }
+    }
+}
+
+@Composable
+private fun Dot(s: String = "") {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .background(
+                MaterialTheme.colorScheme.primaryContainer,
+                RoundedCornerShape(16.dp)
+            ), contentAlignment = Alignment.Center
+    ) {
+        Text(text = s, fontSize = 16.sp)
     }
 }
 

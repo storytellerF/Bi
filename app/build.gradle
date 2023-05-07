@@ -104,10 +104,17 @@ def checkUnstableCode = tasks.register("unstableCodeCheck") {
     logger.info("unstable code check start")
     def instance = Runtime.newInstance()
     def checkList = new ArrayList()
-    checkList.add(new String[]{"app/src/main/java/com/a10miaomiao/bilimiao/comm/delegate/player/model/DashSource.kt", "c4e6218d5b6f8aa7828df6a4ec1f63922f63fe8b"})
-    checkList.add(new String[]{"app/src/main/java/com/a10miaomiao/bilimiao/comm/delegate/player/model/VideoPlayerSource.kt", "92791523f7596d6ef31ab1011a184b60289ea074"})
-    checkList.add(new String[]{"app/src/main/java/com/a10miaomiao/bilimiao/comm/delegate/player/PlayerDelegate2.kt", "c4e6218d5b6f8aa7828df6a4ec1f63922f63fe8b"})
-    checkList.add(new String[]{"bilimiao-comm/src/main/java/com/a10miaomiao/bilimiao/comm/store/UserStore.kt", "ddc8ffca985dded2a14a5e61f16140fd7084e800"})
+    def p = "src/main/java/com/a10miaomiao/bilimiao"
+    def comm = "$p/comm"
+    def page = "$p/page"
+    checkList.add(new String[]{"app/$comm/delegate/player/model/DashSource.kt", "c4e6218d5b6f8aa7828df6a4ec1f63922f63fe8b"})
+    checkList.add(new String[]{"app/$comm/delegate/player/model/VideoPlayerSource.kt", "92791523f7596d6ef31ab1011a184b60289ea074"})
+    checkList.add(new String[]{"app/$comm/delegate/player/PlayerDelegate2.kt", "c4e6218d5b6f8aa7828df6a4ec1f63922f63fe8b"})
+    checkList.add(new String[]{"bilimiao-comm/$comm/store/UserStore.kt", "ddc8ffca985dded2a14a5e61f16140fd7084e800"})
+    checkList.add(new String[]{"app/$page/user/HistoryViewModel.kt", "e28e3bdf26f5a03d27e645039bbfaf30f61d6e7c"})
+    checkList.add(new String[]{"app/$page/home/DynamicViewModel.kt", "4c176e50ff5ad23ce8b69a0a9d2e919b7ceaac54"})
+    checkList.add(new String[]{"app/$page/user/favourite/UserFavouriteListViewModel.kt", "fde19ddecd807f972f19ae41ecbbcc23b91b2ada"})
+    checkList.add(new String[]{"app/$page/user/favourite/UserFavouriteDetailViewModel.kt", "b6f017f0b934c2c12ec22c8994b71ef9e3939869"})
     def strings = new String[]{"git", "--no-pager", "log", "-1", "--no-merges", "--pretty=\"%H\"", "file"}
     checkList.forEach {
         strings[6] = it[0]
@@ -118,17 +125,23 @@ def checkUnstableCode = tasks.register("unstableCodeCheck") {
         if (waitFor != 0) {
             throw new GradleException('error occurred ' + waitFor + " " + error)
         }
-        if (output.replace("\"", "")!= it[1]) {
+        if (output.replace("\"", "") != it[1]) {
             throw new GradleException('check failed ' + it[0] + " " + output + " " + it[1])
         }
         exec.destroy()
     }
     logger.info("unstable code check success")
 }
-//ci 不可用
-//afterEvaluate {
-//    def debug = tasks.named("packageDebug")
-//    def release = tasks.named("packageRelease")
-//    debug.get().dependsOn(checkUnstableCode)
-//    release.get().dependsOn(checkUnstableCode)
-//}
+def r = file("$rootDir.absolutePath/extras.properties")
+if (r.exists()) {
+    def properties = new Properties()
+    properties.load(r.newReader())
+    if (properties.get("unstable_code_check") == "true") {
+        afterEvaluate {
+            def debug = tasks.named("packageDebug")
+            def release = tasks.named("packageRelease")
+            debug.get().dependsOn(checkUnstableCode)
+            release.get().dependsOn(checkUnstableCode)
+        }
+    }
+}

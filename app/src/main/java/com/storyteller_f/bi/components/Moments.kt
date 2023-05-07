@@ -1,19 +1,28 @@
 package com.storyteller_f.bi.components
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -35,9 +44,12 @@ import bilibili.app.dynamic.v2.DynamicCommonOuterClass
 import bilibili.app.dynamic.v2.DynamicGrpc
 import bilibili.app.dynamic.v2.DynamicOuterClass
 import bilibili.app.dynamic.v2.ModuleOuterClass
+import bilibili.app.dynamic.v2.Stat
 import com.a10miaomiao.bilimiao.comm.network.request
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.storyteller_f.bi.R
+import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 
 @Composable
@@ -48,7 +60,7 @@ fun MomentsPage() {
         LazyColumn {
             topRefreshing(lazyPagingItems)
             items(lazyPagingItems) {
-                MomentItem(it ?: MomentsPreviewProvider().values.first(), editMode = false)
+                MomentItem(it ?: MomentsPreviewProvider().values.first())
             }
             bottomAppending(lazyPagingItems)
         }
@@ -86,16 +98,15 @@ class MomentsPreviewProvider : PreviewParameterProvider<DataInfo> {
             yield(
                 DataInfo(
                     "",
-                    "test",
+                    "up name",
                     "https://i0.hdslb.com/bfs/face/member/noface.jpg",
                     "labelText",
-                    90,
-                    90,
                     1,
                     DynamicContentInfo(
-                        "i", "title", pic = "https://i0.hdslb.com/bfs/face/member/noface.jpg"
+                        "i", "视频标题", pic = "https://i0.hdslb.com/bfs/face/member/noface.jpg"
                     ),
-                    Desc.ModuleDesc.getDefaultInstance()
+                    Desc.ModuleDesc.newBuilder().build(),
+                    Stat.ModuleStat.newBuilder().setLike(99).setRepost(99).setReply(99).build()
                 )
             )
         }
@@ -106,13 +117,18 @@ class MomentsPreviewProvider : PreviewParameterProvider<DataInfo> {
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun MomentItem(
-    @PreviewParameter(MomentsPreviewProvider::class) dataInfo: DataInfo, editMode: Boolean = true
+    @PreviewParameter(MomentsPreviewProvider::class) dataInfo: DataInfo
 ) {
     val authorSize = Modifier.size(40.dp)
-    Column {
-        Row(modifier = Modifier.padding(8.dp)) {
-            if (editMode) Box(modifier = authorSize)
-            else GlideImage(model = dataInfo.face, contentDescription = "", modifier = authorSize)
+    Column(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth()
+    ) {
+        Row {
+            StandBy(authorSize) {
+                GlideImage(model = dataInfo.face, contentDescription = "", modifier = authorSize)
+            }
             Column(modifier = Modifier.padding(start = 8.dp)) {
                 Text(text = dataInfo.name)
                 Text(text = dataInfo.labelText)
@@ -120,10 +136,35 @@ fun MomentItem(
         }
         val dynamicContent = dataInfo.dynamicContent
         VideoItem(dynamicContent.pic, dynamicContent.title, dynamicContent.remark.orEmpty())
-        Row {
-            Text(text = "up ${dataInfo.like}")
-            Text(text = "comment ${dataInfo.reply}", modifier = Modifier.padding(start = 8.dp))
+        Row(modifier = Modifier.padding(start = 8.dp)) {
+            ThumbUp(dataInfo.stat.like.toString(), Icons.Filled.ThumbUp, "thumb up count")
+            Spacer(modifier = Modifier.size(8.dp))
+            ThumbUp(
+                dataInfo.stat.reply.toString(),
+                ImageVector.vectorResource(id = R.drawable.baseline_comment_24),
+                "reply count"
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            ThumbUp(dataInfo.stat.repost.toString(), Icons.Filled.Share, "repost")
         }
+    }
+}
+
+@Preview
+@Composable
+fun ThumbUp(
+    text: String = "1",
+    imageVector: ImageVector = Icons.Filled.ThumbUp,
+    description: String = ""
+) {
+    Row(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(imageVector = imageVector, contentDescription = description)
+        Text(text = text, modifier = Modifier.padding(start = 8.dp))
     }
 }
 
@@ -142,11 +183,10 @@ data class DataInfo(
     val name: String,
     val face: String,
     val labelText: String,
-    val like: Long,
-    val reply: Long,
     val dynamicType: Int,
     val dynamicContent: DynamicContentInfo,
     val descMode: Desc.ModuleDesc?,
+    val stat: Stat.ModuleStat,
 )
 
 data class DynamicContentInfo(
@@ -188,10 +228,9 @@ class MomentsPagingSource : PagingSource<Pair<String, String>, DataInfo>() {
                         face = userModule.author.face,
                         labelText = userModule.ptimeLabelText,
                         dynamicType = dynamicModule.typeValue,
-                        like = statModule.like,
-                        reply = statModule.reply,
                         dynamicContent = getDynamicContent(dynamicModule),
                         descMode = descModule,
+                        stat = statModule,
                     )
                 }
                 return LoadResult.Page(
@@ -235,7 +274,7 @@ class MomentsPagingSource : PagingSource<Pair<String, String>, DataInfo>() {
                 )
             }
 
-            else -> DynamicContentInfo("")
+            else -> DynamicContentInfo("", "无法识别的稿件 ${dynamicModule.type}")
         }
     }
 
@@ -243,5 +282,5 @@ class MomentsPagingSource : PagingSource<Pair<String, String>, DataInfo>() {
         return null
     }
 
-    companion object {}
+    companion object
 }
