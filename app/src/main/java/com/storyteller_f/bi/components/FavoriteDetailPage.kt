@@ -16,7 +16,8 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.paging.cachedIn
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
 import com.a10miaomiao.bilimiao.comm.entity.media.MediaDetailInfo
 import com.a10miaomiao.bilimiao.comm.entity.media.MediasInfo
@@ -24,6 +25,7 @@ import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.VideoActivity
+import com.storyteller_f.bi.playVideo
 
 object FavoriteIdKey : CreationExtras.Key<String>
 
@@ -37,6 +39,7 @@ val defaultFactory = object : ViewModelProvider.Factory {
                 extras[VideoIdLongKey]!!,
                 extras[CommentIdKey]!!
             )
+            VideoSearchViewModel::class.java -> VideoSearchViewModel()
             else -> super.create(modelClass, extras)
         }
         return modelClass.cast(t)!!
@@ -46,17 +49,27 @@ val defaultFactory = object : ViewModelProvider.Factory {
 @Composable
 fun FavoriteDetailPage(id: String) {
     val current = LocalContext.current
-    val detailViewModel = viewModel<FavoriteDetailViewModel>(factory = defaultFactory, extras = MutableCreationExtras().apply { 
-        set(FavoriteIdKey, id)
-    })
+    val detailViewModel = viewModel<FavoriteDetailViewModel>(
+        factory = defaultFactory,
+        extras = MutableCreationExtras().apply {
+            set(FavoriteIdKey, id)
+        })
     val lazyPagingItems = detailViewModel.flow.collectAsLazyPagingItems()
     StateView(state = lazyPagingItems.loadState.refresh) {
         LazyColumn {
-            items(lazyPagingItems) {
-                VideoItem(it?.cover.orEmpty(), it?.title.orEmpty(), it?.upper?.name.orEmpty()) {
-                    current.startActivity(Intent(current, VideoActivity::class.java).apply {
-                        putExtra("videoId", it?.id)
-                    })
+            items(
+                count = lazyPagingItems.itemCount,
+                key = lazyPagingItems.itemKey(),
+                contentType = lazyPagingItems.itemContentType(
+                )
+            ) { index ->
+                val item = lazyPagingItems[index]
+                VideoItem(
+                    item?.cover.orEmpty(),
+                    item?.title.orEmpty(),
+                    item?.upper?.name.orEmpty()
+                ) {
+                    current.playVideo(item?.id, 0)
                 }
             }
         }
@@ -104,7 +117,7 @@ class FavoriteDetailSource(val id: String) : PagingSource<Int, MediasInfo>() {
                 if (medias.size < pageSize) null else currentPage + 1
             )
         } else {
-            LoadResult.Error(Exception(res.message))
+            LoadResult.Error(res.error())
         }
     }
 

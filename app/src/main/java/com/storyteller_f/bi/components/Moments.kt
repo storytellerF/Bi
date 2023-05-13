@@ -38,7 +38,8 @@ import androidx.paging.PagingState
 import androidx.paging.cachedIn
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import bilibili.app.dynamic.v2.Desc
 import bilibili.app.dynamic.v2.DynamicCommonOuterClass
 import bilibili.app.dynamic.v2.DynamicGrpc
@@ -59,8 +60,14 @@ fun MomentsPage() {
     StateView(state = lazyPagingItems.loadState.refresh) {
         LazyColumn {
             topRefreshing(lazyPagingItems)
-            items(lazyPagingItems) {
-                MomentItem(it ?: MomentsPreviewProvider().values.first())
+            items(
+                count = lazyPagingItems.itemCount,
+                key = lazyPagingItems.itemKey(),
+                contentType = lazyPagingItems.itemContentType(
+                )
+            ) { index ->
+                val item = lazyPagingItems[index]
+                MomentItem(item ?: MomentsPreviewProvider().values.first())
             }
             bottomAppending(lazyPagingItems)
         }

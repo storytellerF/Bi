@@ -21,7 +21,8 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.paging.cachedIn
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import bilibili.app.interfaces.v1.HistoryOuterClass
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -49,8 +50,6 @@ fun MutableLiveData<LoadingState>.loading(message: String = "") {
 
 class HistoryViewModel : ViewModel() {
     val flow = Pager(
-        // Configure how data is loaded by passing additional properties to
-        // PagingConfig, such as prefetchDistance.
         PagingConfig(pageSize = 20)
     ) {
         HistoryPagingSource()
@@ -65,9 +64,15 @@ fun HistoryPage(openVideo: (String, Long) -> Unit = { _, _ -> }) {
     val lazyItems = viewModel.flow.collectAsLazyPagingItems()
     StateView(state = lazyItems.loadState.refresh) {
         LazyColumn {
-            items(lazyItems, {
-                it.oid.toString() + "" + it.kid.toString()
-            }) { item ->
+            items(
+                count = lazyItems.itemCount,
+                key = lazyItems.itemKey {
+                    it.oid.toString() + "" + it.kid.toString()
+                },
+                contentType = lazyItems.itemContentType(
+                )
+            ) { index ->
+                val item = lazyItems[index]
                 val cursorItem = item ?: HistoryOuterClass.CursorItem.getDefaultInstance()
                 HistoryItem(cursorItem, openVideo)
             }
@@ -122,7 +127,7 @@ fun HistoryItem(
 @Composable
 @OptIn(ExperimentalGlideComposeApi::class)
 fun VideoItem(
-    pic: String = "",
+    pic: String? = null,
     text: String = "text",
     label: String = "label",
     watchVideo: () -> Unit = {}
@@ -136,7 +141,7 @@ fun VideoItem(
             .width((16 * 8).dp)
             .height((8 * 8).dp)
         StandBy(width = 16 * 8, height = 8 * 8) {
-            val u = "${UrlUtil.autoHttps(pic)}@672w_378h_1c_"
+            val u = if (pic == null) null else "${UrlUtil.autoHttps(pic)}@672w_378h_1c_"
             GlideImage(u, contentDescription = null, modifier = coverModifier)
         }
         Column(modifier = Modifier.padding(start = 8.dp)) {
@@ -175,7 +180,7 @@ class HistoryPagingSource : PagingSource<HistoryOuterClass.Cursor, HistoryOuterC
             return LoadResult.Page(
                 data = res?.itemsList.orEmpty(),
                 prevKey = null, // Only paging forward.
-                nextKey = res?.cursor
+                nextKey = res?.cursor?.takeIf { it.max != 0L }
             )
         } catch (e: Throwable) {
             // Handle errors in this block and return LoadResult.Error if it is an
@@ -190,6 +195,6 @@ class HistoryPagingSource : PagingSource<HistoryOuterClass.Cursor, HistoryOuterC
     }
 
     companion object {
-        private const val TAG = "History"
+        private const val TAG = "HistoryPage"
     }
 }

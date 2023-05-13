@@ -1,5 +1,6 @@
 package com.storyteller_f.bi
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -122,14 +123,7 @@ class MainActivity : ComponentActivity() {
                                 startDestination = Screen.History.route
                             ) {
                                 homeNav(selectRoute) { it, progress ->
-                                    context.startActivity(
-                                        Intent(
-                                            context,
-                                            VideoActivity::class.java
-                                        ).apply {
-                                            putExtra("videoId", it)
-                                            putExtra("progress", progress)
-                                        })
+                                    context.playVideo(it, progress)
                                 }
                             }
                         }
@@ -335,4 +329,15 @@ fun String.createQRImage(width: Int, height: Int): Bitmap {
         }.toArray(),
         width, height, Bitmap.Config.ARGB_8888
     )
+}
+
+fun Context.playVideo(it: String?, progress: Long = 0L) {
+    startActivity(
+        Intent(
+            this,
+            VideoActivity::class.java
+        ).apply {
+            putExtra("videoId", it)
+            putExtra("progress", progress)
+        })
 }
