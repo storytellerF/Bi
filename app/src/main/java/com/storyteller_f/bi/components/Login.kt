@@ -45,7 +45,7 @@ class QrcodeLoginViewModel(private val context: Application) : AndroidViewModel(
     val state = MutableLiveData<LoadingState>()
     val qrcodeUrl = MutableLiveData<String>()
     val checkState = MutableLiveData<LoadingState>()
-    var currentAuthCode: String? = null
+    private var currentAuthCode: String? = null
 
     init {
         load()

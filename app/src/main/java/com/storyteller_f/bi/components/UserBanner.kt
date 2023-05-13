@@ -23,6 +23,8 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
 import com.a10miaomiao.bilimiao.comm.entity.user.SpaceInfo
 import com.a10miaomiao.bilimiao.comm.entity.user.UserInfo
@@ -99,26 +102,37 @@ fun UserBanner(@PreviewParameter(UserBannerPreviewProvider::class) u: UserInfo?)
                         model = face, contentDescription = "avatar", modifier = coverSize
                     )
                 }
-                Text(text = u.name, modifier = Modifier.padding(start = 8.dp), style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    text = u.name,
+                    modifier = Modifier.padding(start = 8.dp),
+                    style = MaterialTheme.typography.headlineSmall
+                )
                 Spacer(modifier = Modifier.size(8.dp))
-                Dot(s = if( u.sex == 1) "M" else "F")
+                Dot(s = if (u.sex == 1) "M" else "F")
                 Spacer(modifier = Modifier.size(8.dp))
                 Dot(u.level.toString())
             }
+            val v = viewModel<UserBannerViewModel>(factory = defaultFactory)
+            val info by v.data.observeAsState()
+            Text(text = info?.card?.sign ?: "不说两句？", modifier = Modifier.padding(8.dp))
             Row(modifier = Modifier.padding(8.dp)) {
-                Text(text = "follower ${u.follower}", modifier = Modifier
-                    .background(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        RoundedCornerShape(16.dp)
-                    )
-                    .padding(8.dp))
-                Text(text = "following ${u.following}", modifier = Modifier
-                    .padding(start = 8.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        RoundedCornerShape(16.dp)
-                    )
-                    .padding(8.dp))
+                Text(
+                    text = "follower ${u.follower}", modifier = Modifier
+                        .background(
+                            MaterialTheme.colorScheme.secondary,
+                            RoundedCornerShape(16.dp)
+                        )
+                        .padding(8.dp), color = MaterialTheme.colorScheme.onSecondary
+                )
+                Text(
+                    text = "following ${u.following}", modifier = Modifier
+                        .padding(start = 8.dp)
+                        .background(
+                            MaterialTheme.colorScheme.secondary,
+                            RoundedCornerShape(16.dp)
+                        )
+                        .padding(8.dp), color = MaterialTheme.colorScheme.onSecondary
+                )
             }
         }
     } else {
@@ -140,16 +154,17 @@ private fun Dot(s: String = "") {
         modifier = Modifier
             .size(32.dp)
             .background(
-                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.tertiary,
                 RoundedCornerShape(16.dp)
             ), contentAlignment = Alignment.Center
     ) {
-        Text(text = s, fontSize = 16.sp)
+        Text(text = s, fontSize = 16.sp, color = MaterialTheme.colorScheme.onTertiary)
     }
 }
 
-class UserBannerViewModel() : ViewModel() {
+class UserBannerViewModel : ViewModel() {
     val state = MutableLiveData<LoadingState>()
+    val data = MutableLiveData<SpaceInfo?>()
 
     init {
         load()
@@ -164,9 +179,14 @@ class UserBannerViewModel() : ViewModel() {
         }
         viewModelScope.launch {
             try {
-                BiliApiService.userApi.space(mid.toString()).awaitCall()
+                val gson = BiliApiService.userApi.space(mid.toString()).awaitCall()
                     .gson<ResultInfo<SpaceInfo>>()
-                state.loaded()
+                if (gson.isSuccess) {
+                    data.value = gson.data
+                    state.loaded()
+                } else {
+                    state.error(gson.error())
+                }
             } catch (e: Throwable) {
                 state.error(e)
             }

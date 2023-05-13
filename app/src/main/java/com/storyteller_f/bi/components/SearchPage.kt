@@ -2,6 +2,9 @@ package com.storyteller_f.bi.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -23,6 +26,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,6 +38,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.paging.cachedIn
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
@@ -43,6 +51,10 @@ import com.a10miaomiao.bilimiao.comm.entity.search.SearchUpperInfo
 import com.a10miaomiao.bilimiao.comm.entity.search.SearchVideoInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
+import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.playVideo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -80,39 +92,28 @@ fun SearchPage(back: () -> Unit) {
 
         val coroutineScope = rememberCoroutineScope()
         TabRow(selectedTabIndex = selected) {
-            val l = listOf("video", "bnagumi", "up")
+            val l = listOf("video", "bangumi", "up")
             l.forEachIndexed { i, e ->
-                Tab(selected = selected ==i, onClick = {
+                Tab(selected = selected == i, onClick = {
                     selected = i
                     coroutineScope.launch {
                         pagerState.scrollToPage(i)
                     }
                 }) {
-                    Text(text = e)
+                    Text(text = e, modifier = Modifier.padding(vertical = 12.dp))
                 }
             }
         }
         HorizontalPager(pageCount = 3, state = pagerState) {
             when (it) {
                 0 -> {
-                    val pagingItems = viewModel.videoResult.collectAsLazyPagingItems()
-                    StateView(pagingItems) {
-                        LazyColumn {
-                            items(
-                                count = pagingItems.itemCount,
-                                key = pagingItems.itemKey(),
-                                contentType = pagingItems.itemContentType(
-                                )
-                            ) { index ->
-                                val item = pagingItems[index]
-                                VideoItem(
-                                    item?.cover,
-                                    item?.title.orEmpty(),
-                                    item?.author.orEmpty()
-                                ) {
-                                    current.playVideo(item?.mid)
-                                }
-                            }
+                    List(viewModel.videoResult.collectAsLazyPagingItems()) { item ->
+                        VideoItem(
+                            item?.cover,
+                            item?.title.orEmpty(),
+                            item?.author.orEmpty()
+                        ) {
+                            current.playVideo(item?.param)
                         }
                     }
                 }
@@ -120,41 +121,21 @@ fun SearchPage(back: () -> Unit) {
                 1 -> {
                     val pagingItems =
                         viewModel.bangumiResult.collectAsLazyPagingItems()
-                    StateView(pagingItems) {
-                        LazyColumn {
-                            items(
-                                count = pagingItems.itemCount,
-                                key = pagingItems.itemKey(),
-                                contentType = pagingItems.itemContentType(
-                                )
-                            ) { index ->
-                                val item = pagingItems[index]
-                                VideoItem(
-                                    item?.cover,
-                                    item?.title.orEmpty(),
-                                    item?.cat_desc.orEmpty()
-                                ) {
+                    List(lazyPagingItems = pagingItems) { item ->
+                        VideoItem(
+                            item?.cover,
+                            item?.title.orEmpty(),
+                            item?.cat_desc.orEmpty()
+                        ) {
 //                                    current.playVideo(item?.param)
-                                }
-                            }
                         }
                     }
                 }
 
                 2 -> {
                     val pagingItems = viewModel.upResult.collectAsLazyPagingItems()
-                    StateView(pagingItems) {
-                        LazyColumn {
-                            items(
-                                count = pagingItems.itemCount,
-                                key = pagingItems.itemKey(),
-                                contentType = pagingItems.itemContentType(
-                                )
-                            ) { index ->
-                                val item = pagingItems[index]
-                                UpItem(item)
-                            }
-                        }
+                    List(lazyPagingItems = pagingItems) { item ->
+                        UpItem(item)
                     }
                 }
             }
@@ -166,8 +147,51 @@ fun SearchPage(back: () -> Unit) {
 }
 
 @Composable
-fun UpItem(item: SearchUpperInfo?) {
-    Text(text = item?.title.orEmpty())
+private fun <T : Any> List(
+    lazyPagingItems: LazyPagingItems<T>,
+    content: @Composable (T?) -> Unit
+) {
+    StateView(lazyPagingItems) {
+        LazyColumn {
+            topRefreshing(lazyPagingItems)
+            items(
+                count = lazyPagingItems.itemCount,
+                key = lazyPagingItems.itemKey(),
+                contentType = lazyPagingItems.itemContentType()
+            ) { index ->
+                val item = lazyPagingItems[index]
+                content(item)
+            }
+            bottomAppending(lazyPagingItems)
+        }
+    }
+}
+
+class UpItemPreviewProvider : PreviewParameterProvider<SearchUpperInfo?> {
+    override val values: Sequence<SearchUpperInfo?>
+        get() = sequence {
+            yield(SearchUpperInfo("test", "", "", "", "", 1, "sign", 1, 1, 1))
+        }
+
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Preview
+@Composable
+fun UpItem(@PreviewParameter(UpItemPreviewProvider::class) item: SearchUpperInfo?) {
+    Row(modifier = Modifier.padding(8.dp)) {
+        StandBy(width = 40, height = 40) {
+            val cover = item?.cover
+            GlideImage(
+                model = if (cover != null) UrlUtil.autoHttps("$cover@200w_200h") else null,
+                contentDescription = "cover"
+            )
+        }
+        Column(modifier = Modifier.padding(start = 8.dp)) {
+            Text(text = item?.title.orEmpty())
+            Text(text = item?.sign.orEmpty())
+        }
+    }
 }
 
 class VideoSearchViewModel : ViewModel() {

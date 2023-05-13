@@ -40,6 +40,7 @@ val defaultFactory = object : ViewModelProvider.Factory {
                 extras[CommentIdKey]!!
             )
             VideoSearchViewModel::class.java -> VideoSearchViewModel()
+            UserBannerViewModel::class.java -> UserBannerViewModel()
             else -> super.create(modelClass, extras)
         }
         return modelClass.cast(t)!!
