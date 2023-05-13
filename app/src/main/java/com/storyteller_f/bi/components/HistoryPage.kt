@@ -33,7 +33,7 @@ import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 
 fun MutableLiveData<LoadingState>.loaded() {
-    value = LoadingState.Done
+    value = LoadingState.Done()
 }
 
 fun MutableLiveData<LoadingState>.error(e: Throwable) {

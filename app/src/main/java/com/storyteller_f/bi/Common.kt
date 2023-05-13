@@ -6,17 +6,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import com.a10miaomiao.bilimiao.comm.entity.search.SearchVideoInfo
 
 sealed class LoadingState {
     class Loading(val state: String) : LoadingState()
     class Error(val e: Throwable) : LoadingState()
 
-    object Done : LoadingState()
+    class Done(val itemCount: Int = 1) : LoadingState()
 }
 
 @Composable
@@ -32,37 +30,47 @@ fun StateView(state: LoadingState?, content: @Composable () -> Unit) {
         null -> OneCenter {
             Text(text = "waiting")
         }
+
         is LoadingState.Loading -> OneCenter {
             Text(text = "loading")
         }
+
         is LoadingState.Error -> OneCenter {
             Text(text = state.e.localizedMessage.orEmpty())
         }
-        is LoadingState.Done -> content()
+
+        is LoadingState.Done -> if (state.itemCount == 0) OneCenter {
+            Text(text = "empty")
+        } else content()
     }
 }
 
 @Composable
-fun StateView(collectAsLazyPagingItems: LazyPagingItems<SearchVideoInfo>, function: @Composable () -> Unit) {
-    StateView(collectAsLazyPagingItems.loadState.refresh) {
+fun <T : Any> StateView(pagingItems: LazyPagingItems<T>, function: @Composable () -> Unit) {
+    StateView(pagingItems.loadState.refresh, pagingItems.itemCount) {
         function()
     }
 }
 
 
 @Composable
-fun StateView(state: LoadState?, content: @Composable () -> Unit) {
+fun StateView(state: LoadState?, count: Int = 1, content: @Composable () -> Unit) {
     when (state) {
         null -> OneCenter {
             Text(text = "waiting")
         }
+
         is LoadState.Loading -> OneCenter {
             Text(text = "loading")
         }
+
         is LoadState.Error -> OneCenter {
             Text(text = state.error.localizedMessage.orEmpty())
         }
-        is LoadState.NotLoading -> content()
+
+        is LoadState.NotLoading -> if (count == 0) OneCenter {
+            Text(text = "empty")
+        } else content()
     }
 }
 
@@ -72,9 +80,11 @@ fun ErrorStateView(state: LoadState?, content: @Composable () -> Unit) {
         null -> OneCenter {
             Text(text = "waiting")
         }
+
         is LoadState.Error -> OneCenter {
             Text(text = state.error.localizedMessage.orEmpty())
         }
+
         else -> content()
     }
 }

@@ -128,7 +128,7 @@ class QrcodeLoginViewModel(private val context: Application) : AndroidViewModel(
         checkState.value = if (res.isSuccess) {
             userInfo.value = res.data
             context.saveUserInfo(res.data)
-            LoadingState.Done
+            LoadingState.Done(1)
         } else {
             LoadingState.Error(Exception(res.message))
         }
@@ -145,7 +145,7 @@ data class LoginState(
 class LoginPreviewProvider : PreviewParameterProvider<LoginState> {
     override val values: Sequence<LoginState>
         get() = sequence {
-            yield(LoginState("hello", LoadingState.Done, LoadingState.Done))
+            yield(LoginState("hello", LoadingState.Done(), LoadingState.Done()))
             yield(LoginState(null, LoadingState.Loading("loading"), null))
         }
 }
