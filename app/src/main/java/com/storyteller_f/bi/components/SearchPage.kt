@@ -1,5 +1,6 @@
 package com.storyteller_f.bi.components
 
+import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SearchBar
@@ -19,7 +21,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,93 +64,137 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchPage(modifier: Modifier = Modifier, back: () -> Unit) {
+fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, back: () -> Unit) {
     var active by remember {
         mutableStateOf(false)
     }
+    var input by remember {
+        mutableStateOf("")
+    }
     val current = LocalContext.current
     val viewModel = viewModel<VideoSearchViewModel>(factory = defaultFactory)
-    val query by viewModel.keyword.collectAsState()
-    SearchBar(query = query, onQueryChange = {
-    }, onSearch = {
-        viewModel.keyword.value = it
-    }, active = active, onActiveChange = {
-        active = it
-    }, placeholder = {
-        Text(text = "search")
-    }, leadingIcon = {
+    val trailingIcon = @Composable {
+        Icon(Icons.Filled.Clear, contentDescription = "clear", modifier = Modifier.clickable {
+            viewModel.keyword.value = ""
+        })
+    }
+    val leadingIcon = @Composable {
         Icon(Icons.Filled.ArrowBack, contentDescription = "back", modifier = Modifier.clickable {
             if (active)
                 active = false
             else
                 back()
         })
-    }, trailingIcon = {
-        Icon(Icons.Filled.Clear, contentDescription = "clear", modifier = Modifier.clickable {
-            viewModel.keyword.value = ""
-        })
-    }, modifier = modifier) {
-        var selected by remember {
-            mutableStateOf(0)
+    }
+    val onActiveChange: (Boolean) -> Unit = {
+        active = it
+    }
+    val onSearch: (String) -> Unit = {
+        viewModel.keyword.value = it
+        input = it
+    }
+    val onQueryChange: (String) -> Unit = {
+        input = it
+    }
+    val placeholder = @Composable {
+        Text(text = "search")
+    }
+    if (dockMode) {
+        DockedSearchBar(
+            query = input,
+            onQueryChange = onQueryChange,
+            onSearch = onSearch,
+            active = active,
+            onActiveChange = onActiveChange,
+            placeholder = placeholder,
+            leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon,
+            modifier = modifier
+        ) {
+            SearchContent(viewModel, current)
         }
-        val pagerState = rememberPagerState()
+    } else {
+        SearchBar(
+            query = input,
+            onQueryChange = onQueryChange,
+            onSearch = onSearch,
+            active = active,
+            onActiveChange = onActiveChange,
+            placeholder = placeholder,
+            leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon,
+            modifier = modifier
+        ) {
+            SearchContent(viewModel, current)
+        }
+    }
 
-        val coroutineScope = rememberCoroutineScope()
-        TabRow(selectedTabIndex = selected) {
-            val l = listOf("video", "bangumi", "up")
-            l.forEachIndexed { i, e ->
-                Tab(selected = selected == i, onClick = {
-                    selected = i
-                    coroutineScope.launch {
-                        pagerState.scrollToPage(i)
-                    }
-                }) {
-                    Text(text = e, modifier = Modifier.padding(vertical = 12.dp))
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun SearchContent(
+    viewModel: VideoSearchViewModel,
+    current: Context
+) {
+    var selected by remember {
+        mutableStateOf(0)
+    }
+    val pagerState = rememberPagerState()
+
+    val coroutineScope = rememberCoroutineScope()
+    TabRow(selectedTabIndex = selected) {
+        val l = listOf("video", "bangumi", "up")
+        l.forEachIndexed { i, e ->
+            Tab(selected = selected == i, onClick = {
+                selected = i
+                coroutineScope.launch {
+                    pagerState.scrollToPage(i)
                 }
+            }) {
+                Text(text = e, modifier = Modifier.padding(vertical = 12.dp))
             }
         }
-        HorizontalPager(pageCount = 3, state = pagerState) {
-            when (it) {
-                0 -> {
-                    List(viewModel.videoResult.collectAsLazyPagingItems()) { item ->
-                        VideoItem(
-                            item?.cover,
-                            item?.title.orEmpty(),
-                            item?.author.orEmpty()
-                        ) {
-                            current.playVideo(item?.param)
-                        }
+    }
+    HorizontalPager(pageCount = 3, state = pagerState) {
+        when (it) {
+            0 -> {
+                List(viewModel.videoResult.collectAsLazyPagingItems()) { item ->
+                    VideoItem(
+                        item?.cover,
+                        item?.title.orEmpty(),
+                        item?.author.orEmpty()
+                    ) {
+                        current.playVideo(item?.param)
                     }
                 }
+            }
 
-                1 -> {
-                    val pagingItems =
-                        viewModel.bangumiResult.collectAsLazyPagingItems()
-                    List(lazyPagingItems = pagingItems) { item ->
-                        VideoItem(
-                            item?.cover,
-                            item?.title.orEmpty(),
-                            item?.cat_desc.orEmpty()
-                        ) {
+            1 -> {
+                val pagingItems =
+                    viewModel.bangumiResult.collectAsLazyPagingItems()
+                List(lazyPagingItems = pagingItems) { item ->
+                    VideoItem(
+                        item?.cover,
+                        item?.title.orEmpty(),
+                        item?.cat_desc.orEmpty()
+                    ) {
 //                                    current.playVideo(item?.param)
-                        }
-                    }
-                }
-
-                2 -> {
-                    val pagingItems = viewModel.upResult.collectAsLazyPagingItems()
-                    List(lazyPagingItems = pagingItems) { item ->
-                        UpItem(item)
                     }
                 }
             }
 
+            2 -> {
+                val pagingItems = viewModel.upResult.collectAsLazyPagingItems()
+                List(lazyPagingItems = pagingItems) { item ->
+                    UpItem(item)
+                }
+            }
         }
 
     }
-
 }
 
 @Composable

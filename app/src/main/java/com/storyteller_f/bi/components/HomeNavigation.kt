@@ -87,7 +87,7 @@ fun ExpandedContent(
     }) {
         Row(modifier = Modifier.statusBarsPadding()) {
             Column(modifier = Modifier.weight(1f)) {
-                SearchPage(modifier = Modifier.padding(horizontal = 8.dp)) {
+                SearchPage(modifier = Modifier.padding(horizontal = 8.dp), dockMode = true) {
 
                 }
                 content()
@@ -121,7 +121,7 @@ fun MediumContent(
         }
 
         Column(modifier = Modifier.weight(1f)) {
-            SearchPage(modifier = Modifier.padding(horizontal = 8.dp)) {
+            SearchPage(modifier = Modifier.padding(horizontal = 8.dp), dockMode = true) {
 
             }
             content()
