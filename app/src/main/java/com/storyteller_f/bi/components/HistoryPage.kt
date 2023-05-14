@@ -139,8 +139,8 @@ fun VideoItem(
         }) {
         val coverModifier = Modifier
             .width((16 * 8).dp)
-            .height((8 * 8).dp)
-        StandBy(width = 16 * 8, height = 8 * 8) {
+            .height((9 * 8).dp)
+        StandBy(coverModifier) {
             val u = if (pic == null) null else "${UrlUtil.autoHttps(pic)}@672w_378h_1c_"
             GlideImage(u, contentDescription = null, modifier = coverModifier)
         }

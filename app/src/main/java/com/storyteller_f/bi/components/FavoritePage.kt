@@ -81,12 +81,13 @@ fun MediaListContainer(@PreviewParameter(MediaListContainerPreviewProvider::clas
     Box(contentAlignment = Alignment.Center, modifier = Modifier.clickable {
         openMediaList(mediaListInfo)
     }) {
-        StandBy(width = 200, height = 100) {
+        val modifier = Modifier.aspectRatio(16f / 9)
+        StandBy(modifier) {
             val u = UrlUtil.autoHttps(mediaListInfo.cover)
             GlideImage(
                 model = "$u@672w_378h_1c_",
                 contentDescription = "cover",
-                modifier = Modifier.aspectRatio(16f / 9)
+                modifier = modifier
             )
         }
 
@@ -103,11 +104,10 @@ class FavoriteViewModel : ViewModel() {
     val data = MutableLiveData<UserSpaceFavFolderInfo>()
 
     init {
-
         refresh()
     }
 
-    fun refresh() {
+    private fun refresh() {
         viewModelScope.launch {
             state.loading()
             try {

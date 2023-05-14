@@ -54,7 +54,8 @@ import androidx.paging.PagingState
 import androidx.paging.cachedIn
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import bilibili.main.community.reply.v1.ReplyOuterClass
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
@@ -88,9 +89,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
-
 @Composable
-fun VideoPage(videoId: String = "", initProgress: Long, requestOrientation: ((Boolean) -> Unit)? = null) {
+fun VideoPage(
+    videoId: String = "",
+    initProgress: Long,
+    requestOrientation: ((Boolean) -> Unit)? = null
+) {
     val videoViewModel =
         viewModel<VideoViewModel>(factory = defaultFactory, extras = MutableCreationExtras().apply {
             set(VideoIdKey, videoId)
@@ -112,7 +116,7 @@ fun VideoPage(videoId: String = "", initProgress: Long, requestOrientation: ((Bo
         mutableStateOf<MediaSource?>(null)
     }
     var progress by remember {
-        mutableStateOf(initProgress.coerceAtLeast(0L) .seconds.inWholeMilliseconds)
+        mutableStateOf(initProgress.coerceAtLeast(0L).seconds.inWholeMilliseconds)
     }
 
     val playerSource = playerSourceState
@@ -502,8 +506,13 @@ private fun CommentList(
     StateView(pagingItems.loadState.refresh) {
         LazyColumn {
             topRefreshing(pagingItems)
-            items(pagingItems) {
-                val info = it ?: ReplyOuterClass.ReplyInfo.getDefaultInstance()
+            items(
+                count = pagingItems.itemCount,
+                key = pagingItems.itemKey(),
+                contentType = pagingItems.itemContentType()
+            ) { index ->
+                val item = pagingItems[index]
+                val info = item ?: ReplyOuterClass.ReplyInfo.getDefaultInstance()
                 CommentItem(item = info, viewComment, parent)
             }
         }
@@ -572,11 +581,12 @@ fun CommentItem(
             }
     ) {
         Row {
-            StandBy(30, 30) {
+            val modifier = Modifier.size(30.dp)
+            StandBy(modifier) {
                 GlideImage(
                     model = UrlUtil.autoHttps(item.member.face),
                     contentDescription = "avatar",
-                    modifier = Modifier.size(30.dp)
+                    modifier = modifier
                 )
             }
             Text(

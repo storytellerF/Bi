@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -64,27 +65,32 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun SearchPage(back: () -> Unit) {
+fun SearchPage(modifier: Modifier = Modifier, back: () -> Unit) {
+    var active by remember {
+        mutableStateOf(false)
+    }
     val current = LocalContext.current
     val viewModel = viewModel<VideoSearchViewModel>(factory = defaultFactory)
-
     val query by viewModel.keyword.collectAsState()
     SearchBar(query = query, onQueryChange = {
-        viewModel.keyword.value = it
     }, onSearch = {
-    }, active = true, onActiveChange = {
-
+        viewModel.keyword.value = it
+    }, active = active, onActiveChange = {
+        active = it
     }, placeholder = {
         Text(text = "search")
     }, leadingIcon = {
         Icon(Icons.Filled.ArrowBack, contentDescription = "back", modifier = Modifier.clickable {
-            back()
+            if (active)
+                active = false
+            else
+                back()
         })
     }, trailingIcon = {
         Icon(Icons.Filled.Clear, contentDescription = "clear", modifier = Modifier.clickable {
             viewModel.keyword.value = ""
         })
-    }) {
+    }, modifier = modifier) {
         var selected by remember {
             mutableStateOf(0)
         }
@@ -180,11 +186,12 @@ class UpItemPreviewProvider : PreviewParameterProvider<SearchUpperInfo?> {
 @Composable
 fun UpItem(@PreviewParameter(UpItemPreviewProvider::class) item: SearchUpperInfo?) {
     Row(modifier = Modifier.padding(8.dp)) {
-        StandBy(width = 40, height = 40) {
+        val modifier = Modifier.size(40.dp)
+        StandBy(modifier) {
             val cover = item?.cover
             GlideImage(
                 model = if (cover != null) UrlUtil.autoHttps("$cover@200w_200h") else null,
-                contentDescription = "cover"
+                contentDescription = "cover", modifier = modifier
             )
         }
         Column(modifier = Modifier.padding(start = 8.dp)) {
@@ -195,7 +202,7 @@ fun UpItem(@PreviewParameter(UpItemPreviewProvider::class) item: SearchUpperInfo
 }
 
 class VideoSearchViewModel : ViewModel() {
-    val keyword = MutableStateFlow("原神")
+    val keyword = MutableStateFlow("")
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val videoResult = keyword.flatMapLatest {
