@@ -139,6 +139,7 @@ fun CompatContent(
     userInfo: UserInfo?,
     currentRoute: String?,
     selectRoute: (String) -> Unit = {},
+    search: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -156,7 +157,7 @@ fun CompatContent(
         drawerState = drawerState
     ) {
         Scaffold(topBar = {
-            HomeTopBar {
+            HomeTopBar(search) {
                 open()
             }
         }, bottomBar = {

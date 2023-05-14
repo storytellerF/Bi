@@ -1,6 +1,5 @@
 package com.storyteller_f.bi.components
 
-import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
@@ -11,11 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import com.storyteller_f.bi.SearchActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeTopBar(openDrawer: () -> Unit) {
+fun HomeTopBar(search: () -> Unit = {}, openDrawer: () -> Unit = {}) {
     val current = LocalContext.current
     TopAppBar(
         title = {
@@ -30,7 +28,7 @@ fun HomeTopBar(openDrawer: () -> Unit) {
         },
         actions = {
             IconButton(onClick = {
-                current.startActivity(Intent(current, SearchActivity::class.java))
+                search()
             }) {
                 Icon(
                     Icons.Filled.Search,

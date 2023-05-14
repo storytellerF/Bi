@@ -7,10 +7,15 @@ import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -20,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,6 +43,7 @@ import com.storyteller_f.bi.components.CompatContent
 import com.storyteller_f.bi.components.ExpandedContent
 import com.storyteller_f.bi.components.MediumContent
 import com.storyteller_f.bi.components.Screen
+import com.storyteller_f.bi.components.SearchPage
 import com.storyteller_f.bi.components.homeNav
 import com.storyteller_f.bi.ui.theme.BiTheme
 import com.storyteller_f.bi.unstable.userInfo
@@ -84,21 +91,44 @@ class MainActivity : ComponentActivity() {
             var initProgress by remember {
                 mutableStateOf(0L)
             }
+            var searchInCompat by rememberSaveable {
+                mutableStateOf(false)
+            }
             BiTheme {
                 val calculateWindowSizeClass = calculateWindowSizeClass(this)
                 val openParallelVideo: (String, Long) -> Unit = { it, progress ->
                     adaptiveVideo = it
                     initProgress = progress
                 }
+
                 when (calculateWindowSizeClass.widthSizeClass) {
                     WindowWidthSizeClass.Compact -> {
-                        CompatContent(userInfo = user, currentRoute, selectRoute) {
-                            NavHost(
-                                navController = navController,
-                                startDestination = Screen.History.route
+
+                        Box {
+                            CompatContent(userInfo = user, currentRoute, selectRoute, search = {
+                                searchInCompat = true
+                            }) {
+                                NavHost(
+                                    navController = navController,
+                                    startDestination = Screen.History.route
+                                ) {
+                                    homeNav(selectRoute) { it, progress ->
+                                        context.playVideo(it, progress)
+                                    }
+                                }
+                            }
+                            AnimatedVisibility(
+                                visible = searchInCompat,
+                                enter = fadeIn(),
+                                exit = fadeOut()
                             ) {
-                                homeNav(selectRoute) { it, progress ->
-                                    context.playVideo(it, progress)
+                                Surface {
+                                    SearchPage(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        instantActive = true
+                                    ) {
+                                        searchInCompat = false
+                                    }
                                 }
                             }
                         }
@@ -132,6 +162,7 @@ class MainActivity : ComponentActivity() {
     }
 
 }
+
 @Composable
 fun UserAware(content: @Composable () -> Unit) {
     val u by userInfo.observeAsState()
@@ -148,6 +179,7 @@ fun UserAware(content: @Composable () -> Unit) {
         content()
     }
 }
+
 @Composable
 fun StandBy(modifier: Modifier, me: @Composable () -> Unit) {
     val view = LocalView.current

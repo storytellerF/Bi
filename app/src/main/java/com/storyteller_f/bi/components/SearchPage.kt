@@ -1,6 +1,7 @@
 package com.storyteller_f.bi.components
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,22 +61,31 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.playVideo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, back: () -> Unit) {
+fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, instantActive: Boolean = false, back: () -> Unit) {
+    val viewModel = viewModel<VideoSearchViewModel>(factory = defaultFactory)
+
     var active by remember {
         mutableStateOf(false)
     }
     var input by remember {
-        mutableStateOf("")
+        mutableStateOf(viewModel.keyword.value)
+    }
+    val scope = rememberCoroutineScope()
+    val customExit: suspend CoroutineScope.() -> Unit = {
+        active = false
+        delay(100)
+        back()
     }
     val current = LocalContext.current
-    val viewModel = viewModel<VideoSearchViewModel>(factory = defaultFactory)
     val trailingIcon = @Composable {
         Icon(Icons.Filled.Clear, contentDescription = "clear", modifier = Modifier.clickable {
             viewModel.keyword.value = ""
@@ -82,10 +93,13 @@ fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, back: (
     }
     val leadingIcon = @Composable {
         Icon(Icons.Filled.ArrowBack, contentDescription = "back", modifier = Modifier.clickable {
-            if (active)
-                active = false
-            else
-                back()
+            when {
+                instantActive -> {
+                    scope.launch(block = customExit)
+                }
+                active -> active = false
+                else -> back()
+            }
         })
     }
     val onActiveChange: (Boolean) -> Unit = {
@@ -129,6 +143,14 @@ fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, back: (
         ) {
             SearchContent(viewModel, current)
         }
+    }
+    LaunchedEffect(key1 = instantActive) {
+        if (instantActive) {
+            active = true
+        }
+    }
+    BackHandler(enabled = instantActive) {
+        scope.launch(block = customExit)
     }
 
 }
