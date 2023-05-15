@@ -54,7 +54,7 @@ import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 
 @Composable
-fun MomentsPage() {
+fun MomentsPage(openVideo: (String, Long) -> Unit) {
     val viewModel = viewModel<MomentsViewModel>()
     val lazyPagingItems = viewModel.flow.collectAsLazyPagingItems()
     StateView(state = lazyPagingItems.loadState.refresh) {
@@ -67,7 +67,9 @@ fun MomentsPage() {
                 )
             ) { index ->
                 val item = lazyPagingItems[index]
-                MomentItem(item ?: MomentsPreviewProvider().values.first())
+                MomentItem(item ?: MomentsPreviewProvider().values.first()) {
+                    openVideo(it, 0)
+                }
             }
             bottomAppending(lazyPagingItems)
         }
@@ -124,7 +126,8 @@ class MomentsPreviewProvider : PreviewParameterProvider<DataInfo> {
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun MomentItem(
-    @PreviewParameter(MomentsPreviewProvider::class) dataInfo: DataInfo
+    @PreviewParameter(MomentsPreviewProvider::class) dataInfo: DataInfo,
+    watchVideo: (String) -> Unit = {}
 ) {
     val authorSize = Modifier.size(40.dp)
     Column(
@@ -142,7 +145,11 @@ fun MomentItem(
             }
         }
         val dynamicContent = dataInfo.dynamicContent
-        VideoItem(dynamicContent.pic, dynamicContent.title, dynamicContent.remark.orEmpty())
+        VideoItem(dynamicContent.pic, dynamicContent.title, dynamicContent.remark.orEmpty()) {
+            if (dataInfo.dynamicType == ModuleOuterClass.ModuleDynamicType.mdl_dyn_archive_VALUE) {
+                watchVideo(dataInfo.dynamicContent.id)
+            }
+        }
         Row(modifier = Modifier.padding(start = 8.dp)) {
             ThumbUp(dataInfo.stat.like.toString(), Icons.Filled.ThumbUp, "thumb up count")
             Spacer(modifier = Modifier.size(8.dp))

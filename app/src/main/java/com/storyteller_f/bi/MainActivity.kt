@@ -7,12 +7,10 @@ import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,6 +19,7 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -82,18 +82,20 @@ class MainActivity : ComponentActivity() {
                 it.route
             }
             val context = LocalContext.current
-            val currentRoute = navBackStackEntry?.destination?.hierarchy?.firstOrNull {
-                items.contains(it.route)
-            }?.route
+            val currentRoute by remember {
+                derivedStateOf {
+                    navBackStackEntry?.destination?.hierarchy?.firstOrNull {
+                        items.contains(it.route)
+                    }?.route
+                }
+            }
             var adaptiveVideo by remember {
                 mutableStateOf<String?>(null)
             }
             var initProgress by remember {
                 mutableStateOf(0L)
             }
-            var searchInCompat by rememberSaveable {
-                mutableStateOf(false)
-            }
+
             BiTheme {
                 val calculateWindowSizeClass = calculateWindowSizeClass(this)
                 val openParallelVideo: (String, Long) -> Unit = { it, progress ->
@@ -103,7 +105,9 @@ class MainActivity : ComponentActivity() {
 
                 when (calculateWindowSizeClass.widthSizeClass) {
                     WindowWidthSizeClass.Compact -> {
-
+                        var searchInCompat by rememberSaveable {
+                            mutableStateOf(false)
+                        }
                         Box {
                             CompatContent(userInfo = user, currentRoute, selectRoute, search = {
                                 searchInCompat = true
@@ -117,21 +121,19 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             }
-                            AnimatedVisibility(
-                                visible = searchInCompat,
-                                enter = fadeIn(),
-                                exit = fadeOut()
-                            ) {
+
+                            if (searchInCompat) {
                                 Surface {
                                     SearchPage(
                                         modifier = Modifier.fillMaxWidth(),
-                                        instantActive = true
+                                        noMiddleState = true
                                     ) {
                                         searchInCompat = false
                                     }
                                 }
                             }
                         }
+
                     }
 
                     WindowWidthSizeClass.Medium -> {
@@ -139,6 +141,7 @@ class MainActivity : ComponentActivity() {
                             NavHost(
                                 navController = navController,
                                 startDestination = Screen.History.route,
+                                modifier = Modifier.padding(top = 72.dp)
                             ) {
                                 homeNav(selectRoute, openParallelVideo)
                             }
@@ -146,10 +149,11 @@ class MainActivity : ComponentActivity() {
                     }
 
                     WindowWidthSizeClass.Expanded -> {
-                        ExpandedContent(adaptiveVideo, initProgress) {
+                        ExpandedContent(currentRoute, adaptiveVideo, initProgress, selectRoute) {
                             NavHost(
                                 navController = navController,
-                                startDestination = Screen.History.route
+                                startDestination = Screen.History.route,
+                                modifier = Modifier.padding(top = 72.dp)
                             ) {
                                 homeNav(selectRoute, openParallelVideo)
                             }

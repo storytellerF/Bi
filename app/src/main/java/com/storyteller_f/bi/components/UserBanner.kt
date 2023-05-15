@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
@@ -52,28 +51,6 @@ import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.unstable.logout
 import com.storyteller_f.bi.unstable.userInfo
 import kotlinx.coroutines.launch
-
-@Preview
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun UserCenterDrawer(userInfo: UserInfo? = null) {
-    val current = LocalContext.current
-    ModalDrawerSheet {
-        Spacer(Modifier.height(12.dp))
-        UserBanner(userInfo)
-        Spacer(Modifier.height(12.dp))
-        NavigationDrawerItem(label = { Text(text = "Setting") }, icon = {
-            Icon(Icons.Filled.Settings, contentDescription = "setting")
-        }, selected = false, onClick = {
-            Toast.makeText(current, "not implementation", Toast.LENGTH_SHORT).show()
-        })
-        NavigationDrawerItem(label = { Text(text = "Logout") }, icon = {
-            Icon(Icons.Filled.Close, contentDescription = "logout")
-        }, selected = false, onClick = {
-            current.logout()
-        })
-    }
-}
 
 class UserBannerPreviewProvider : PreviewParameterProvider<UserInfo?> {
     override val values: Sequence<UserInfo?>

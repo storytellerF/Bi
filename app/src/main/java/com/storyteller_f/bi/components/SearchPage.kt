@@ -61,16 +61,14 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.playVideo
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, instantActive: Boolean = false, back: () -> Unit) {
+fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, noMiddleState: Boolean = false, back: () -> Unit) {
     val viewModel = viewModel<VideoSearchViewModel>(factory = defaultFactory)
 
     var active by remember {
@@ -78,12 +76,6 @@ fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, instant
     }
     var input by remember {
         mutableStateOf(viewModel.keyword.value)
-    }
-    val scope = rememberCoroutineScope()
-    val customExit: suspend CoroutineScope.() -> Unit = {
-        active = false
-        delay(100)
-        back()
     }
     val current = LocalContext.current
     val trailingIcon = @Composable {
@@ -94,9 +86,7 @@ fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, instant
     val leadingIcon = @Composable {
         Icon(Icons.Filled.ArrowBack, contentDescription = "back", modifier = Modifier.clickable {
             when {
-                instantActive -> {
-                    scope.launch(block = customExit)
-                }
+                noMiddleState -> back()
                 active -> active = false
                 else -> back()
             }
@@ -144,13 +134,13 @@ fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, instant
             SearchContent(viewModel, current)
         }
     }
-    LaunchedEffect(key1 = instantActive) {
-        if (instantActive) {
+    LaunchedEffect(key1 = noMiddleState) {
+        if (noMiddleState) {
             active = true
         }
     }
-    BackHandler(enabled = instantActive) {
-        scope.launch(block = customExit)
+    BackHandler(enabled = noMiddleState) {
+        back()
     }
 
 }
