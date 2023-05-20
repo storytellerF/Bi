@@ -4,23 +4,22 @@ import com.a10miaomiao.bilimiao.comm.apis.PlayerAPI
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 
 class DashSource(
-    val quality: Int,
-    val dashData: PlayerAPI.Dash,
-    val uposHost: String = ""
+    private val quality: Int,
+    private val dashData: PlayerAPI.Dash,
+    private val uposHost: String = ""
 ) {
 
     fun getDashVideo(): PlayerAPI.DashItem? {
         val videoList = dashData.video
-        var conditionStreams = videoList.find { it.id == quality }
-        if (conditionStreams != null) {
-            return conditionStreams
-        } else if (videoList.isNotEmpty()) {
-            return videoList[videoList.size - 1]
+        val conditionStreams = videoList.find { it.id == quality }
+        return when {
+            conditionStreams != null -> conditionStreams
+            videoList.isNotEmpty() -> videoList[videoList.size - 1]
+            else -> null
         }
-        return null
     }
 
-    fun getDashAudio(): PlayerAPI.DashItem? {
+    private fun getDashAudio(): PlayerAPI.DashItem? {
         val audioList = dashData.audio
         if (audioList.isNotEmpty()) {
             return audioList[0]
@@ -33,7 +32,7 @@ class DashSource(
         video: PlayerAPI.DashItem = getDashVideo()!!
     ): String {
         val audio = getDashAudio()
-        var mpdStr = """
+        val mpdStr = """
 <MPD xmlns="urn:mpeg:DASH:schema:MPD:2011" profiles="urn:mpeg:dash:profile:isoff-on-demand:2011" type="static" mediaPresentationDuration="PT${dashData.duration}S" minBufferTime="PT${dashData.min_buffer_time}S">
     <Period start="PT0S">
         <AdaptationSet>

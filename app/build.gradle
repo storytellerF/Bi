@@ -92,14 +92,14 @@ dependencies {
 
     implementation(project(":bili-api"))
 
-    implementation 'com.google.android.exoplayer:exoplayer:2.18.6'
+    implementation 'com.google.android.exoplayer:exoplayer:2.18.7'
 
     def paging_version = "3.1.1"
 
     implementation "androidx.paging:paging-runtime-ktx:$paging_version"
     implementation "androidx.paging:paging-compose:1.0.0-alpha19"
     implementation("com.github.storytellerF.Bao:startup:2.2.0")
-    implementation "androidx.compose.material3:material3-window-size-class:1.1.0-rc01"
+    implementation "androidx.compose.material3:material3-window-size-class:1.2.0-alpha01"
 
 }
 def checkUnstableCode = tasks.register("unstableCodeCheck") {

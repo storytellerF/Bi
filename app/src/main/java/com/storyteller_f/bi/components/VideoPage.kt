@@ -242,6 +242,7 @@ private fun VideoView(
                 requestVideoOnly(fullscreen)
             }
         }
+        it.setShowSubtitleButton(true)
         it.player = player
         player.addMediaSource(mediaSource)
         player.prepare()
