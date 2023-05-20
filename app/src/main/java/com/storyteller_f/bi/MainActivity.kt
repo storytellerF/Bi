@@ -9,10 +9,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
@@ -24,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,11 +43,11 @@ import androidx.navigation.compose.rememberNavController
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
-import com.storyteller_f.bi.components.CompatContent
-import com.storyteller_f.bi.components.ExpandedContent
-import com.storyteller_f.bi.components.MediumContent
+import com.storyteller_f.bi.components.HomeNavigation
+import com.storyteller_f.bi.components.NavItemIcon
 import com.storyteller_f.bi.components.Screen
 import com.storyteller_f.bi.components.SearchPage
+import com.storyteller_f.bi.components.VideoPage
 import com.storyteller_f.bi.components.homeNav
 import com.storyteller_f.bi.ui.theme.BiTheme
 import com.storyteller_f.bi.unstable.userInfo
@@ -81,7 +85,6 @@ class MainActivity : ComponentActivity() {
             val items = Screen.allRoute.map {
                 it.route
             }
-            val context = LocalContext.current
             val currentRoute by remember {
                 derivedStateOf {
                     navBackStackEntry?.destination?.hierarchy?.firstOrNull {
@@ -95,67 +98,62 @@ class MainActivity : ComponentActivity() {
             var initProgress by remember {
                 mutableStateOf(0L)
             }
+            val context = LocalContext.current
+            val calculateWindowSizeClass = calculateWindowSizeClass(this)
 
+            val wideMode =
+                calculateWindowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
             BiTheme {
-                val calculateWindowSizeClass = calculateWindowSizeClass(this)
-                val openParallelVideo: (String, Long) -> Unit = { it, progress ->
-                    adaptiveVideo = it
-                    initProgress = progress
+                val openVideo: (String, Long) -> Unit = { it, progress ->
+                    if (wideMode) {
+                        adaptiveVideo = it
+                        initProgress = progress
+                    } else {
+                        context.playVideo(it, progress)
+                    }
                 }
 
-                when (calculateWindowSizeClass.widthSizeClass) {
-                    WindowWidthSizeClass.Compact -> {
-                        var searchInCompat by rememberSaveable {
-                            mutableStateOf(false)
+                Surface {
+                    Row(modifier = Modifier.statusBarsPadding()) {
+                        if (wideMode) {
+                            NavigationRail {
+                                Screen.bottomNavigationItems.forEach {
+                                    NavigationRailItem(
+                                        selected = currentRoute == it.route,
+                                        onClick = { selectRoute(it.route) },
+                                        icon = { NavItemIcon(screen = it) })
+                                }
+                            }
                         }
-                        Box {
-                            CompatContent(userInfo = user, currentRoute, selectRoute, search = {
-                                searchInCompat = true
-                            }) {
+
+                        Box(modifier = Modifier.weight(1f)) {
+                            SearchPage(
+                                modifier = Modifier
+                                    .padding(horizontal = 8.dp)
+                                    .fillMaxWidth(),
+                                user,
+                                dockMode = wideMode
+                            ) {
+
+                            }
+                            Column {
                                 NavHost(
                                     navController = navController,
-                                    startDestination = Screen.History.route
+                                    startDestination = Screen.History.route,
+                                    modifier = Modifier
+                                        .padding(top = 72.dp)
+                                        .weight(1f)
                                 ) {
-                                    homeNav(selectRoute) { it, progress ->
-                                        context.playVideo(it, progress)
-                                    }
+                                    homeNav(selectRoute, openVideo)
                                 }
+                                if (!wideMode)
+                                    HomeNavigation(currentRoute, selectRoute)
                             }
 
-                            if (searchInCompat) {
-                                Surface {
-                                    SearchPage(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        noMiddleState = true
-                                    ) {
-                                        searchInCompat = false
-                                    }
-                                }
-                            }
                         }
-
-                    }
-
-                    WindowWidthSizeClass.Medium -> {
-                        MediumContent(currentRoute, adaptiveVideo, initProgress, selectRoute) {
-                            NavHost(
-                                navController = navController,
-                                startDestination = Screen.History.route,
-                                modifier = Modifier.padding(top = 72.dp)
-                            ) {
-                                homeNav(selectRoute, openParallelVideo)
-                            }
-                        }
-                    }
-
-                    WindowWidthSizeClass.Expanded -> {
-                        ExpandedContent(currentRoute, adaptiveVideo, initProgress, selectRoute) {
-                            NavHost(
-                                navController = navController,
-                                startDestination = Screen.History.route,
-                                modifier = Modifier.padding(top = 72.dp)
-                            ) {
-                                homeNav(selectRoute, openParallelVideo)
+                        adaptiveVideo?.let {
+                            Box(modifier = Modifier.weight(1f)) {
+                                VideoPage(it, initProgress)
                             }
                         }
                     }

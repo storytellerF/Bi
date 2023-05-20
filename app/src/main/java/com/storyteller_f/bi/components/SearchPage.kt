@@ -1,11 +1,20 @@
 package com.storyteller_f.bi.components
 
-import android.content.Context
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,10 +23,14 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -28,12 +41,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -53,6 +74,7 @@ import com.a10miaomiao.bilimiao.comm.entity.search.SearchListInfo
 import com.a10miaomiao.bilimiao.comm.entity.search.SearchResultInfo
 import com.a10miaomiao.bilimiao.comm.entity.search.SearchUpperInfo
 import com.a10miaomiao.bilimiao.comm.entity.search.SearchVideoInfo
+import com.a10miaomiao.bilimiao.comm.entity.user.UserInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
@@ -61,27 +83,40 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.playVideo
+import com.storyteller_f.bi.ui.theme.BiTheme
+import com.storyteller_f.bi.unstable.logout
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalMaterial3Api::class
+)
 @Composable
-fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, noMiddleState: Boolean = false, back: () -> Unit) {
+fun SearchPage(
+    modifier: Modifier = Modifier,
+    userInfo: UserInfo? = null,
+    dockMode: Boolean = false,
+    noMiddleState: Boolean = false,
+    back: () -> Unit
+) {
     val viewModel = viewModel<VideoSearchViewModel>(factory = defaultFactory)
-
     var active by remember {
         mutableStateOf(false)
     }
     var input by remember {
         mutableStateOf(viewModel.keyword.value)
     }
-    val current = LocalContext.current
+
     val trailingIcon = @Composable {
-        Icon(Icons.Filled.Clear, contentDescription = "clear", modifier = Modifier.clickable {
-            viewModel.keyword.value = ""
-        })
+        Row(modifier = Modifier.padding(end = 8.dp)) {
+            Icon(Icons.Filled.Clear, contentDescription = "clear", modifier = Modifier.clickable {
+                viewModel.keyword.value = ""
+            })
+            if (!active) HomeAvatar(userInfo)
+
+        }
     }
     val leadingIcon = @Composable {
         Icon(Icons.Filled.ArrowBack, contentDescription = "back", modifier = Modifier.clickable {
@@ -117,7 +152,7 @@ fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, noMiddl
             trailingIcon = trailingIcon,
             modifier = modifier
         ) {
-            SearchContent(viewModel, current)
+            SearchContent(viewModel)
         }
     } else {
         SearchBar(
@@ -131,7 +166,7 @@ fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, noMiddl
             trailingIcon = trailingIcon,
             modifier = modifier
         ) {
-            SearchContent(viewModel, current)
+            SearchContent(viewModel)
         }
     }
     LaunchedEffect(key1 = noMiddleState) {
@@ -146,11 +181,92 @@ fun SearchPage(modifier: Modifier = Modifier, dockMode: Boolean = false, noMiddl
 }
 
 @Composable
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalComposeUiApi::class)
+private fun RowScope.HomeAvatar(
+    userInfo: UserInfo?,
+) {
+    val view = LocalView.current
+
+    val coverSize = Modifier
+        .padding(start = 8.dp)
+        .size(24.dp)
+    var showPopup by remember {
+        mutableStateOf(false)
+    }
+    if (userInfo != null) {
+        StandBy(coverSize) {
+            GlideImage(
+                model = UrlUtil.autoHttps(userInfo.face),
+                contentDescription = "avatar",
+                modifier = coverSize.clickable {
+                    showPopup = true
+                }
+            )
+        }
+    } else if (view.isInEditMode) {
+        Box(modifier = coverSize.background(Color.Blue))
+    }
+    val pxValue = LocalDensity.current.run { 24.dp.toPx() }
+    AnimatedVisibility(visible = showPopup, enter = fadeIn(), exit = fadeOut()) {
+        Popup(
+            offset = IntOffset(0, pxValue.toInt()),
+            alignment = Alignment.TopEnd,
+            onDismissRequest = {
+                showPopup = false
+            },
+            properties = PopupProperties(
+                focusable = true,
+                usePlatformDefaultWidth = true
+            )
+        ) {
+            Surface {
+                Column {
+                    val context = LocalContext.current
+                    Spacer(Modifier.height(12.dp))
+                    UserBanner(u = userInfo)
+                    Spacer(Modifier.height(12.dp))
+                    NavigationDrawerItem(label = { Text(text = "Setting") }, icon = {
+                        Icon(Icons.Filled.Settings, contentDescription = "setting")
+                    }, selected = false, onClick = {
+                        Toast.makeText(
+                            context,
+                            "not implementation",
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
+                    })
+                    NavigationDrawerItem(label = { Text(text = "Logout") }, icon = {
+                        Icon(Icons.Filled.Close, contentDescription = "logout")
+                    }, selected = false, onClick = {
+                        context.logout()
+                    })
+                }
+
+            }
+        }
+
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewSearchPage() {
+    BiTheme {
+        Surface(modifier = Modifier.fillMaxWidth()) {
+            SearchPage(modifier = Modifier) {
+
+            }
+        }
+    }
+}
+
+@Composable
 @OptIn(ExperimentalFoundationApi::class)
 private fun SearchContent(
     viewModel: VideoSearchViewModel,
-    current: Context
 ) {
+    val current = LocalContext.current
+
     var selected by remember {
         mutableStateOf(0)
     }
