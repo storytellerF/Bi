@@ -73,17 +73,16 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem.fromUri
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.StyledPlayerView
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
+import com.google.android.exoplayer2.video.VideoSize
 import com.storyteller_f.bi.Api
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.unstable.PlayerDelegate
-import com.storyteller_f.bi.unstable.VideoPlayerSource
+import com.storyteller_f.bi.unstable.VideoPlayerRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -110,60 +109,84 @@ fun VideoPage(
     val scope = rememberCoroutineScope()
     val uiControl = rememberSystemUiController()
     val videoInfo by videoViewModel.info.observeAsState()
-    val playerSourceState by videoViewModel.playerSource.observeAsState()
+    val videoPlayerRepository by videoViewModel.playerSource.observeAsState()
     val loadingState by videoViewModel.state.observeAsState()
-    var mediaSourceState by remember {
+    var mediaSource by remember {
         mutableStateOf<MediaSource?>(null)
+    }
+    var size by remember {
+        mutableStateOf<VideoSize?>(null)
     }
     var progress by remember {
         mutableStateOf(initProgress.coerceAtLeast(0L).seconds.inWholeMilliseconds)
     }
 
-    val playerSource = playerSourceState
     val player = remember {
         Log.d("VideoPage", "VideoPage() called create player")
-        ExoPlayer.Builder(context).build()
+        ExoPlayer.Builder(context).build().apply {
+            addListener(object : Player.Listener {
+                override fun onVideoSizeChanged(videoSize: VideoSize) {
+                    super.onVideoSizeChanged(videoSize)
+                    size = videoSize
+                }
+            })
+        }
     }
 
+    val reportProgress: () -> Unit = {
+        scope.launch {
+            videoPlayerRepository?.historyReport(player.currentPosition)
+        }
+    }
     DisposableEffect(key1 = player, effect = {
         Log.d("VideoPage", "VideoPage() called disposable")
         onDispose {
             Log.d("VideoPage", "VideoPage() called dispose invoked")
             progress = player.currentPosition
-            scope.launch {
-                playerSource?.historyReport(player.currentPosition / 1000)
-            }
+            reportProgress()
             player.stop()
             player.release()
         }
     })
-    LaunchedEffect(key1 = playerSource) {
-        Log.d("VideoPage", "VideoPage() called try get source $playerSource")
-        playerSource?.let {
-            val sourceInfo = withContext(Dispatchers.IO) {
+    LaunchedEffect(key1 = videoPlayerRepository) {
+        Log.d("VideoPage", "VideoPage() called try get source $videoPlayerRepository")
+        videoPlayerRepository?.let {
+            mediaSource = withContext(Dispatchers.IO) {
                 context.sourcePair(it)
             }
-            mediaSourceState = sourceInfo
         }
 
     }
     Log.d("VideoPage", "VideoPage() called")
     StateView(state = loadingState) {
         Log.d("VideoPage", "VideoPage() called StateView")
-        val mediaSource = mediaSourceState
+        val playerMediaSource = mediaSource
+        val s = size
+
+        val potentialPortrait = if (s != null) s.width < s.height else false
+        val requestVideoOnly = if (requestOrientation != null) { it: Boolean ->
+            progress = player.currentPosition
+            videoOnly = it
+            uiControl.isStatusBarVisible = !it
+            uiControl.isNavigationBarVisible = !it
+            if (!(potentialPortrait && it)) {
+                requestOrientation.invoke(it)
+            }
+        } else null
         Column {
             if (!videoOnly)
                 Text(text = videoId)
-            if (mediaSource != null) {
+            if (playerMediaSource != null) {
                 Log.d("VideoPage", "VideoPage() called VideoView $progress")
-                VideoView(player, mediaSource, playerSource, progress,
-                    if (requestOrientation != null) { it: Boolean ->
-                        progress = player.currentPosition
-                        videoOnly = it
-                        uiControl.isStatusBarVisible = !it
-                        uiControl.isNavigationBarVisible = !it
-                        requestOrientation.invoke(it)
-                    } else null)
+
+                VideoView(
+                    player,
+                    playerMediaSource,
+                    progress,
+                    !(potentialPortrait && videoOnly),
+                    reportProgress,
+                    requestVideoOnly
+                )
             }
             if (!videoOnly) {
                 val navController = rememberNavController()
@@ -198,17 +221,21 @@ fun VideoPage(
 private fun VideoView(
     player: ExoPlayer,
     mediaSource: MediaSource,
-    playerSource: VideoPlayerSource?,
     seekTo: Long,
+    aspectRatio: Boolean,
+    reportProgress: () -> Unit,
     requestVideoOnly: ((Boolean) -> Unit)? = null,
 ) {
-    val scope = rememberCoroutineScope()
     AndroidView(
         factory = {
             StyledPlayerView(it)
         }, modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(16f / 9)
+            .let {
+                if (aspectRatio) {
+                    it.aspectRatio(16f / 9)
+                } else it
+            }
     ) {
         if (requestVideoOnly != null) {
             it.setFullscreenButtonClickListener { fullscreen ->
@@ -220,9 +247,7 @@ private fun VideoView(
         player.prepare()
         player.seekTo(seekTo)
         player.play()
-        scope.launch {
-            playerSource?.historyReport(player.currentPosition)
-        }
+        reportProgress()
     }
 }
 
@@ -340,7 +365,7 @@ class VideoViewModel(private val videoId: String) : ViewModel() {
     val state = MutableLiveData<LoadingState>()
     val info = MutableLiveData<VideoInfo>()
     val playerSource = info.map { info ->
-        VideoPlayerSource(
+        VideoPlayerRepository(
             title = info.title,
             coverUrl = info.pic,
             aid = info.aid,
@@ -392,22 +417,7 @@ class VideoViewModel(private val videoId: String) : ViewModel() {
 }
 
 suspend fun Context.sourcePair(playerSource: BasePlayerSource): MediaSource {
-    val sourceInfo = playerSource.getPlayerUrl(64, 1)
-
-    val url = sourceInfo.url
-    return when {
-        url.contains("\n") -> PlayerDelegate().mediaSource(this, playerSource)
-        else -> {
-            val factory = DefaultHttpDataSource.Factory()
-            factory.setUserAgent(PlayerDelegate.DEFAULT_USER_AGENT)
-            factory.setDefaultRequestProperties(
-                PlayerDelegate().getDefaultRequestProperties(
-                    playerSource
-                )
-            )
-            ProgressiveMediaSource.Factory(factory).createMediaSource(fromUri(url))
-        }
-    }
+    return PlayerDelegate().mediaSource(this, playerSource)
 }
 
 class CommentViewModel(oid: String) : ViewModel() {
