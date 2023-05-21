@@ -131,6 +131,9 @@ class PlayerDelegate {
                 SubtitleConfiguration.Builder(it.toUri())
                     .setMimeType(MimeTypes.APPLICATION_SUBRIP)
                     .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                    .setLabel(info.lan_doc)
+                    .setId(info.id)
+                    .setRoleFlags(C.ROLE_FLAG_SUBTITLE)
                     .setLanguage(info.lan).build()
             }
         }

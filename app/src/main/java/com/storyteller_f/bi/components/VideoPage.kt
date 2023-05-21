@@ -17,6 +17,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,6 +45,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -176,44 +180,102 @@ fun VideoPage(
         Column {
             if (!videoOnly)
                 Text(text = videoId)
-            if (playerMediaSource != null) {
-                Log.d("VideoPage", "VideoPage() called VideoView $progress")
-
-                VideoView(
-                    player,
-                    playerMediaSource,
-                    progress,
-                    !(potentialPortrait && videoOnly),
-                    reportProgress,
-                    requestVideoOnly
-                )
-            }
+            VideoFrame(
+                videoInfo,
+                playerMediaSource,
+                player,
+                progress,
+                !(potentialPortrait && videoOnly),
+                reportProgress,
+                requestVideoOnly
+            )
             if (!videoOnly) {
                 val navController = rememberNavController()
+                val navigate = { it: String ->
+                    navController.navigate(it)
+                }
                 NavHost(navController = navController, startDestination = "description") {
-                    composable("description") {
-                        VideoDescription(videoInfo) {
-                            navController.navigate("comments")
-                        }
-                    }
-                    composable("comments") {
-                        CommentsPage(videoId) {
-                            navController.navigate("comment/${videoId}/$it")
-                        }
-                    }
-                    composable("comment/{vid}/{cid}", arguments = listOf(navArgument("vid") {
-                        type = NavType.LongType
-                    }, navArgument("cid") {
-                        type = NavType.LongType
-                    })) {
-                        val vid = it.arguments?.getLong("vid")!!
-                        val cid = it.arguments?.getLong("cid")!!
-                        CommentReplyPage(cid = cid, oid = vid)
-                    }
+                    videoPageNav(videoInfo, navigate, videoId)
                 }
             }
 
         }
+    }
+}
+
+/**
+ * @param aspectRatio 是否保持播放器固定比例
+ * @param requestVideoOnly 为null，说明不支持全屏
+ */
+@Composable
+@OptIn(ExperimentalGlideComposeApi::class)
+private fun VideoFrame(
+    videoInfo: VideoInfo?,
+    playerMediaSource: MediaSource?,
+    player: ExoPlayer,
+    progress: Long,
+    aspectRatio: Boolean,
+    reportProgress: () -> Unit = {},
+    requestVideoOnly: ((Boolean) -> Unit)?
+) {
+    if (playerMediaSource != null) {
+        Log.d("VideoPage", "VideoPage() called VideoView $progress")
+        VideoView(
+            player,
+            playerMediaSource,
+            progress,
+            aspectRatio,
+            reportProgress,
+            requestVideoOnly
+        )
+    } else {
+        val coverModifier = Modifier.aspectRatio(16f / 9)
+        StandBy(modifier = coverModifier) {
+            GlideImage(
+                model = videoInfo?.pic,
+                contentDescription = "video cover",
+                modifier = coverModifier
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SubtitleTrack(
+    checked: Boolean = true,
+    text: String = "zh",
+    onCheckedChange: (Boolean) -> Unit = {}
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+        Text(text = text)
+    }
+}
+
+private fun NavGraphBuilder.videoPageNav(
+    videoInfo: VideoInfo?,
+    navigate: (String) -> Unit,
+    videoId: String
+) {
+    composable("description") {
+        VideoDescription(videoInfo) {
+            navigate("comments")
+        }
+    }
+    composable("comments") {
+        CommentsPage(videoId) {
+            navigate("comment/${videoId}/$it")
+        }
+    }
+    composable("comment/{vid}/{cid}", arguments = listOf(navArgument("vid") {
+        type = NavType.LongType
+    }, navArgument("cid") {
+        type = NavType.LongType
+    })) {
+        val vid = it.arguments?.getLong("vid")!!
+        val cid = it.arguments?.getLong("cid")!!
+        CommentReplyPage(cid = cid, oid = vid)
     }
 }
 
