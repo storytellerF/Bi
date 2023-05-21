@@ -99,7 +99,7 @@ fun SearchPage(
     userInfo: UserInfo? = null,
     dockMode: Boolean = false,
     noMiddleState: Boolean = false,
-    back: () -> Unit
+    back: () -> Unit = {}
 ) {
     val viewModel = viewModel<VideoSearchViewModel>(factory = defaultFactory)
     var active by remember {

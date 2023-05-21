@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
@@ -114,7 +115,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Surface {
-                    Row(modifier = Modifier.statusBarsPadding()) {
+                    Row(modifier = if (wideMode) Modifier.statusBarsPadding().displayCutoutPadding() else Modifier) {
                         if (wideMode) {
                             NavigationRail {
                                 Screen.bottomNavigationItems.forEach {
@@ -127,15 +128,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         Box(modifier = Modifier.weight(1f)) {
-                            SearchPage(
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp)
-                                    .align(Alignment.TopCenter),
-                                user,
-                                dockMode = wideMode
-                            ) {
-
-                            }
+                            SearchPage(modifier = Modifier.align(Alignment.TopCenter), userInfo = user, dockMode = wideMode)
                             Column {
                                 NavHost(
                                     navController = navController,
