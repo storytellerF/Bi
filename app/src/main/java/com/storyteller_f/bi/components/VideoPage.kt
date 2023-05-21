@@ -231,7 +231,7 @@ private fun VideoFrame(
         val coverModifier = Modifier.aspectRatio(16f / 9)
         StandBy(modifier = coverModifier) {
             GlideImage(
-                model = videoInfo?.pic,
+                model = videoInfo?.pic?.let { UrlUtil.autoHttps(it) },
                 contentDescription = "video cover",
                 modifier = coverModifier
             )

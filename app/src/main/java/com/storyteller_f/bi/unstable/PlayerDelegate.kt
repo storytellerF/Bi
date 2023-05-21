@@ -2,33 +2,23 @@ package com.storyteller_f.bi.unstable
 
 import android.content.Context
 import android.net.Uri
-import androidx.core.net.toUri
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
-import com.a10miaomiao.bilimiao.comm.delegate.player.entity.SubtitleSourceInfo
-import com.a10miaomiao.bilimiao.comm.entity.player.SubtitleJsonInfo
-import com.a10miaomiao.bilimiao.comm.network.MiaoHttp
-import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
-import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
-import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.MediaItem.SubtitleConfiguration
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.MergingMediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.source.SingleSampleMediaSource
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.dash.manifest.DashManifestParser
 import com.google.android.exoplayer2.upstream.DefaultDataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
-import com.google.android.exoplayer2.util.MimeTypes
-import java.io.File
+import com.storyteller_f.bi.subtitleMediaSources
 
 class PlayerDelegate {
     suspend fun mediaSource(context: Context, source: BasePlayerSource): MediaSource {
         val dataSource = source.getPlayerUrl(64, 1).url
         val dataSourceArr = dataSource.split("\n")
-        val subtitleMediaSources = subtitleMediaSources(source, context)
+        val subtitleMediaSources = source.subtitleMediaSources(context)
         val header = getDefaultRequestProperties(source)
         val dataSourceFactory = DefaultHttpDataSource.Factory()
         dataSourceFactory.setUserAgent(DEFAULT_USER_AGENT)
@@ -89,55 +79,6 @@ class PlayerDelegate {
                 throw Exception("not support ${dataSourceArr[0]}")
             }
         }
-    }
-
-    private suspend fun subtitleMediaSources(
-        source: BasePlayerSource,
-        context: Context
-    ): List<SingleSampleMediaSource> {
-        return subtitleConfigurations(source, context).map {
-            SingleSampleMediaSource.Factory(DefaultDataSource.Factory(context))
-                .createMediaSource(it, C.TIME_UNSET)
-        }
-    }
-
-    private suspend fun subtitleConfigurations(
-        source: BasePlayerSource,
-        context: Context
-    ): List<SubtitleConfiguration> {
-        val subtitleConfigurations = source.getSubtitles().mapNotNull { info: SubtitleSourceInfo ->
-
-            val file = File(context.cacheDir, "/subtitle/${source.id}/${info.lan}.srt")
-            val parent = file.parentFile
-            (when {
-                parent == null -> null
-                !parent.exists() && !parent.mkdirs() -> null
-                file.exists() || !file.createNewFile() -> file
-                else -> {
-                    val res = MiaoHttp.request {
-                        url = UrlUtil.autoHttps(info.subtitle_url)
-                    }.awaitCall().gson<SubtitleJsonInfo>()
-                    val content = res.body.mapIndexed { index, itemInfo ->
-                        """
-                            ${index + 1}
-                            ${formatDuration(itemInfo.from)} --> ${formatDuration(itemInfo.to)}
-                            ${itemInfo.content}
-                        """.trimIndent()
-                    }.joinToString("\n\n")
-                    file.writeText(content)
-                    file
-                }
-            })?.let {
-                SubtitleConfiguration.Builder(it.toUri())
-                    .setMimeType(MimeTypes.APPLICATION_SUBRIP)
-                    .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                    .setLabel(info.lan_doc)
-                    .setId(info.id)
-                    .setRoleFlags(C.ROLE_FLAG_SUBTITLE)
-                    .setLanguage(info.lan).build()
-            }
-        }
-        return subtitleConfigurations
     }
 
     private fun getDefaultRequestProperties(playerSource: BasePlayerSource): Map<String, String> {
