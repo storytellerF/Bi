@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
+import com.storyteller_f.bi.components.BangumiPage
 import com.storyteller_f.bi.components.VideoPage
 import com.storyteller_f.bi.ui.theme.BiTheme
 
@@ -17,12 +18,18 @@ class VideoActivity : ComponentActivity() {
         Log.d(TAG, "onCreate() called with: savedInstanceState = $savedInstanceState")
         val videoId = intent.getStringExtra("videoId")!!
         val progress = intent.getLongExtra("progress", 0L)
+        val business = intent.getStringExtra("business")!!
+        val extra = intent.getStringExtra("extra")!!
         setContent {
             BiTheme {
                 Surface {
-                    VideoPage(videoId, progress) {
-                        requestedOrientation =
-                            if (it) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    if (business == "archive") {
+                        VideoPage(videoId, progress) {
+                            requestedOrientation =
+                                if (it) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                        }
+                    } else {
+                        BangumiPage(videoId, extra)
                     }
                 }
             }

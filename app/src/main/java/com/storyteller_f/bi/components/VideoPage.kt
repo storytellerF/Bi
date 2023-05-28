@@ -1,6 +1,5 @@
 package com.storyteller_f.bi.components
 
-import android.content.Context
 import android.text.format.DateUtils
 import android.util.Log
 import androidx.compose.foundation.background
@@ -23,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -84,6 +85,7 @@ import com.storyteller_f.bi.Api
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
+import com.storyteller_f.bi.defaultFactory
 import com.storyteller_f.bi.unstable.PlayerDelegate
 import com.storyteller_f.bi.unstable.VideoPlayerRepository
 import kotlinx.coroutines.Dispatchers
@@ -91,29 +93,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
-@Composable
-fun VideoPage(
-    videoId: String = "",
-    initProgress: Long,
-    requestOrientation: ((Boolean) -> Unit)? = null
-) {
-    val videoViewModel =
-        viewModel<VideoViewModel>(factory = defaultFactory, extras = MutableCreationExtras().apply {
-            set(VideoIdKey, videoId)
-        })
+class PlayerKit(val size: VideoSize?, val mediaSource: MediaSource?, val progress: Long, val player: ExoPlayer, val reportHistory: () -> Unit) {
 
-    /**
-     * 一般来说就是全屏的意思
-     */
-    var videoOnly by remember {
-        mutableStateOf(false)
-    }
+}
+
+@Composable
+fun rememberPlayerKit(videoPlayerRepository: BasePlayerSource?, initProgress: Long): State<PlayerKit> {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val uiControl = rememberSystemUiController()
-    val videoInfo by videoViewModel.info.observeAsState()
-    val videoPlayerRepository by videoViewModel.playerSource.observeAsState()
-    val loadingState by videoViewModel.state.observeAsState()
     var mediaSource by remember {
         mutableStateOf<MediaSource?>(null)
     }
@@ -155,37 +142,65 @@ fun VideoPage(
         Log.d("VideoPage", "VideoPage() called try get source $videoPlayerRepository")
         videoPlayerRepository?.let {
             mediaSource = withContext(Dispatchers.IO) {
-                context.sourcePair(it)
+                PlayerDelegate().mediaSource(context, it)
             }
         }
 
     }
+    return remember {
+        derivedStateOf {
+            PlayerKit(size, mediaSource, progress, player, reportProgress)
+        }
+    }
+}
+
+@Composable
+fun VideoPage(
+    videoId: String = "",
+    initProgress: Long,
+    requestOrientation: ((Boolean) -> Unit)? = null
+) {
+    val videoViewModel =
+        viewModel<VideoViewModel>(factory = defaultFactory, extras = MutableCreationExtras().apply {
+            set(VideoId, videoId)
+        })
+
+    /**
+     * 一般来说就是全屏的意思
+     */
+    var videoOnly by remember {
+        mutableStateOf(false)
+    }
+    val uiControl = rememberSystemUiController()
+    val videoInfo by videoViewModel.info.observeAsState()
+    val videoPlayerRepository by videoViewModel.playerSource.observeAsState()
+    val loadingState by videoViewModel.state.observeAsState()
+    val playerKit by rememberPlayerKit(
+        videoPlayerRepository = videoPlayerRepository,
+        initProgress = initProgress
+    )
+    val size = playerKit.size
+
+    //全屏时依然保持竖屏状态
+    val potentialPortrait = if (size != null) size.width < size.height else false
+    val requestVideoOnly = if (requestOrientation != null) { it: Boolean ->
+        videoOnly = it
+        uiControl.isStatusBarVisible = !it
+        uiControl.isNavigationBarVisible = !it
+        if (!(potentialPortrait && it)) {
+            requestOrientation.invoke(it)
+        }
+    } else null
     Log.d("VideoPage", "VideoPage() called")
     StateView(state = loadingState) {
         Log.d("VideoPage", "VideoPage() called StateView")
-        val playerMediaSource = mediaSource
-        val s = size
-
-        val potentialPortrait = if (s != null) s.width < s.height else false
-        val requestVideoOnly = if (requestOrientation != null) { it: Boolean ->
-            progress = player.currentPosition
-            videoOnly = it
-            uiControl.isStatusBarVisible = !it
-            uiControl.isNavigationBarVisible = !it
-            if (!(potentialPortrait && it)) {
-                requestOrientation.invoke(it)
-            }
-        } else null
         Column {
             if (!videoOnly)
                 Text(text = videoId)
             VideoFrame(
-                videoInfo,
-                playerMediaSource,
-                player,
-                progress,
-                !(potentialPortrait && videoOnly),
-                reportProgress,
+                playerKit,
+                videoInfo?.pic,
+                !(potentialPortrait && videoOnly),//竖屏全屏时不用保持16:9的画面比例
                 requestVideoOnly
             )
             if (!videoOnly) {
@@ -208,30 +223,29 @@ fun VideoPage(
  */
 @Composable
 @OptIn(ExperimentalGlideComposeApi::class)
-private fun VideoFrame(
-    videoInfo: VideoInfo?,
-    playerMediaSource: MediaSource?,
-    player: ExoPlayer,
-    progress: Long,
+fun VideoFrame(
+    playerKit: PlayerKit,
+    cover: String?,
     aspectRatio: Boolean,
-    reportProgress: () -> Unit = {},
     requestVideoOnly: ((Boolean) -> Unit)?
 ) {
-    if (playerMediaSource != null) {
-        Log.d("VideoPage", "VideoPage() called VideoView $progress")
+
+    val mediaSource = playerKit.mediaSource
+    if (mediaSource != null) {
+        Log.d("VideoPage", "VideoPage() called VideoView ${playerKit.progress}")
         VideoView(
-            player,
-            playerMediaSource,
-            progress,
+            playerKit.player,
+            mediaSource,
+            playerKit.progress,
             aspectRatio,
-            reportProgress,
+            playerKit.reportHistory,
             requestVideoOnly
         )
     } else {
         val coverModifier = Modifier.aspectRatio(16f / 9)
         StandBy(modifier = coverModifier) {
             GlideImage(
-                model = videoInfo?.pic?.let { UrlUtil.autoHttps(it) },
+                model = cover?.let { UrlUtil.autoHttps(it) },
                 contentDescription = "video cover",
                 modifier = coverModifier
             )
@@ -284,7 +298,7 @@ private fun VideoView(
     mediaSource: MediaSource,
     seekTo: Long,
     aspectRatio: Boolean,
-    reportProgress: () -> Unit,
+    videoStarted: () -> Unit,
     requestVideoOnly: ((Boolean) -> Unit)? = null,
 ) {
     AndroidView(
@@ -309,7 +323,7 @@ private fun VideoView(
         player.prepare()
         player.seekTo(seekTo)
         player.play()
-        reportProgress()
+        videoStarted()
     }
 }
 
@@ -318,7 +332,7 @@ class VideoInfoPreviewProvider : PreviewParameterProvider<VideoInfo> {
         get() = sequence {
             yield(
                 VideoInfo(
-                    "",
+                    "867109523",
                     1,
                     "",
                     0L,
@@ -419,9 +433,10 @@ private fun VideoDescription(
 
 }
 
-object VideoIdKey : CreationExtras.Key<String>
-object VideoIdLongKey : CreationExtras.Key<Long>
-object CommentIdKey : CreationExtras.Key<Long>
+object VideoId : CreationExtras.Key<String>
+object SeasonId : CreationExtras.Key<String>
+object VideoIdLong : CreationExtras.Key<Long>
+object CommentId : CreationExtras.Key<Long>
 
 class VideoViewModel(private val videoId: String) : ViewModel() {
     val state = MutableLiveData<LoadingState>()
@@ -476,10 +491,6 @@ class VideoViewModel(private val videoId: String) : ViewModel() {
             }
         }
     }
-}
-
-suspend fun Context.sourcePair(playerSource: BasePlayerSource): MediaSource {
-    return PlayerDelegate().mediaSource(this, playerSource)
 }
 
 class CommentViewModel(oid: String) : ViewModel() {
@@ -552,7 +563,7 @@ class CommentReplySource(private val oid: Long, private val pid: Long) :
 fun CommentsPage(videoId: String, viewComment: (Long) -> Unit = {}) {
     val data: CommentViewModel =
         viewModel(factory = defaultFactory, extras = MutableCreationExtras().apply {
-            set(VideoIdKey, videoId)
+            set(VideoId, videoId)
         })
     val pagingItems = data.flow.collectAsLazyPagingItems()
     CommentList(0, pagingItems, viewComment)
@@ -562,8 +573,8 @@ fun CommentsPage(videoId: String, viewComment: (Long) -> Unit = {}) {
 fun CommentReplyPage(cid: Long, oid: Long) {
     val data: CommentReplyViewModel =
         viewModel(factory = defaultFactory, extras = MutableCreationExtras().apply {
-            set(CommentIdKey, cid)
-            set(VideoIdLongKey, oid)
+            set(CommentId, cid)
+            set(VideoIdLong, oid)
         })
     val pagingItems = data.flow.collectAsLazyPagingItems()
     CommentList(cid, pagingItems = pagingItems)

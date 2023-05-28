@@ -54,7 +54,7 @@ import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 
 @Composable
-fun MomentsPage(openVideo: (String, Long) -> Unit) {
+fun MomentsPage(openVideo: (String, String, String, Long) -> Unit) {
     val viewModel = viewModel<MomentsViewModel>()
     val lazyPagingItems = viewModel.flow.collectAsLazyPagingItems()
     StateView(state = lazyPagingItems.loadState.refresh) {
@@ -68,7 +68,7 @@ fun MomentsPage(openVideo: (String, Long) -> Unit) {
             ) { index ->
                 val item = lazyPagingItems[index]
                 MomentItem(item ?: MomentsPreviewProvider().values.first()) {
-                    openVideo(it, 0)
+                    openVideo(it, it, "archive", 0)
                 }
             }
             bottomAppending(lazyPagingItems)

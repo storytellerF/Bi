@@ -55,6 +55,8 @@ import com.storyteller_f.bi.unstable.userInfo
 import java.util.Collections
 import java.util.stream.IntStream
 
+class SideVideo(val id: String, val kid: String, val business: String, val progress: Long)
+
 class MainActivity : ComponentActivity() {
     companion object
 
@@ -94,28 +96,27 @@ class MainActivity : ComponentActivity() {
                 }
             }
             var adaptiveVideo by remember {
-                mutableStateOf<String?>(null)
-            }
-            var initProgress by remember {
-                mutableStateOf(0L)
+                mutableStateOf<SideVideo?>(null)
             }
             val context = LocalContext.current
             val calculateWindowSizeClass = calculateWindowSizeClass(this)
 
             val wideMode =
                 calculateWindowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
-            BiTheme {
-                val openVideo: (String, Long) -> Unit = { it, progress ->
-                    if (wideMode) {
-                        adaptiveVideo = it
-                        initProgress = progress
-                    } else {
-                        context.playVideo(it, progress)
-                    }
+            val openVideo: (String, String, String, Long) -> Unit = { kid, oid, business, progress ->
+                if (wideMode) {
+                    adaptiveVideo = SideVideo(oid, kid, business, progress)
+                } else {
+                    context.playVideo(kid, oid, business, progress)
                 }
-
+            }
+            BiTheme {
                 Surface {
-                    Row(modifier = if (wideMode) Modifier.statusBarsPadding().displayCutoutPadding() else Modifier) {
+                    Row(
+                        modifier = if (wideMode) Modifier
+                            .statusBarsPadding()
+                            .displayCutoutPadding() else Modifier.statusBarsPadding()
+                    ) {
                         if (wideMode) {
                             NavigationRail {
                                 Screen.bottomNavigationItems.forEach {
@@ -128,13 +129,16 @@ class MainActivity : ComponentActivity() {
                         }
 
                         Box(modifier = Modifier.weight(1f)) {
-                            SearchPage(modifier = Modifier.align(Alignment.TopCenter), userInfo = user, dockMode = wideMode)
-                            Column {
+                            SearchPage(
+                                modifier = Modifier.align(Alignment.TopCenter),
+                                userInfo = user,
+                                dockMode = wideMode
+                            )
+                            Column(modifier = Modifier.padding(top = 72.dp).displayCutoutPadding()) {
                                 NavHost(
                                     navController = navController,
                                     startDestination = Screen.History.route,
                                     modifier = Modifier
-                                        .padding(top = 72.dp)
                                         .weight(1f)
                                 ) {
                                     homeNav(selectRoute, openVideo)
@@ -145,8 +149,9 @@ class MainActivity : ComponentActivity() {
 
                         }
                         adaptiveVideo?.let {
+                            val initProgress = it.progress
                             Box(modifier = Modifier.weight(1f)) {
-                                VideoPage(it, initProgress)
+                                VideoPage(it.id, initProgress)
                             }
                         }
                     }
@@ -205,13 +210,15 @@ fun String.createQRImage(width: Int, height: Int): Bitmap {
     )
 }
 
-fun Context.playVideo(it: String?, progress: Long = 0L) {
+fun Context.playVideo(kid: String?, oid: String?, business: String, progress: Long = 0L) {
     startActivity(
         Intent(
             this,
             VideoActivity::class.java
         ).apply {
-            putExtra("videoId", it)
+            putExtra("videoId", oid)
+            putExtra("extra", kid)
             putExtra("progress", progress)
+            putExtra("business", business)
         })
 }

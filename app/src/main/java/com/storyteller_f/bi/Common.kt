@@ -6,9 +6,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import com.storyteller_f.bi.components.BangumiViewModel
+import com.storyteller_f.bi.components.CommentId
+import com.storyteller_f.bi.components.CommentReplyViewModel
+import com.storyteller_f.bi.components.CommentViewModel
+import com.storyteller_f.bi.components.FavoriteDetailViewModel
+import com.storyteller_f.bi.components.FavoriteIdKey
+import com.storyteller_f.bi.components.SeasonId
+import com.storyteller_f.bi.components.UserBannerViewModel
+import com.storyteller_f.bi.components.VideoId
+import com.storyteller_f.bi.components.VideoIdLong
+import com.storyteller_f.bi.components.VideoSearchViewModel
+import com.storyteller_f.bi.components.VideoViewModel
 
 sealed class LoadingState {
     class Loading(val state: String) : LoadingState()
@@ -92,5 +107,24 @@ fun ErrorStateView(state: LoadState?, content: @Composable () -> Unit) {
 fun buildExtras(block: MutableCreationExtras.() -> Unit): MutableCreationExtras {
     return MutableCreationExtras().apply {
         block()
+    }
+}
+
+val defaultFactory = object : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+        val t = when (modelClass) {
+            FavoriteDetailViewModel::class.java -> FavoriteDetailViewModel(extras[FavoriteIdKey]!!)
+            VideoViewModel::class.java -> VideoViewModel(extras[VideoId]!!)
+            CommentViewModel::class.java -> CommentViewModel(extras[VideoId]!!)
+            CommentReplyViewModel::class.java -> CommentReplyViewModel(
+                extras[VideoIdLong]!!,
+                extras[CommentId]!!
+            )
+            VideoSearchViewModel::class.java -> VideoSearchViewModel()
+            UserBannerViewModel::class.java -> UserBannerViewModel()
+            BangumiViewModel::class.java -> BangumiViewModel(extras[VideoId]!!, extras[SeasonId]!!)
+            else -> super.create(modelClass, extras)
+        }
+        return modelClass.cast(t)!!
     }
 }

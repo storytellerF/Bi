@@ -1,5 +1,6 @@
 package com.storyteller_f.bi.components
 
+import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -68,6 +69,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
+import com.a10miaomiao.bilimiao.comm.entity.ResultInfo2
 import com.a10miaomiao.bilimiao.comm.entity.search.SearchArchiveInfo
 import com.a10miaomiao.bilimiao.comm.entity.search.SearchBangumiInfo
 import com.a10miaomiao.bilimiao.comm.entity.search.SearchListInfo
@@ -82,6 +84,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
+import com.storyteller_f.bi.defaultFactory
 import com.storyteller_f.bi.playVideo
 import com.storyteller_f.bi.ui.theme.BiTheme
 import com.storyteller_f.bi.unstable.logout
@@ -270,7 +273,12 @@ private fun SearchContent(
     var selected by remember {
         mutableStateOf(0)
     }
-    val pagerState = rememberPagerState()
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        initialPageOffsetFraction = 0f
+    ) {
+        3
+    }
 
     val coroutineScope = rememberCoroutineScope()
     TabRow(selectedTabIndex = selected) {
@@ -286,42 +294,52 @@ private fun SearchContent(
             }
         }
     }
-    HorizontalPager(pageCount = 3, state = pagerState) {
-        when (it) {
-            0 -> {
-                List(viewModel.videoResult.collectAsLazyPagingItems()) { item ->
-                    VideoItem(
-                        item?.cover,
-                        item?.title.orEmpty(),
-                        item?.author.orEmpty()
-                    ) {
-                        current.playVideo(item?.param)
-                    }
-                }
-            }
+    //                                    current.playVideo(item?.param)
+    HorizontalPager(state = pagerState) {
+        SearchPageBuilder(it, viewModel, current)
+    }
 
-            1 -> {
-                val pagingItems =
-                    viewModel.bangumiResult.collectAsLazyPagingItems()
-                List(lazyPagingItems = pagingItems) { item ->
-                    VideoItem(
-                        item?.cover,
-                        item?.title.orEmpty(),
-                        item?.cat_desc.orEmpty()
-                    ) {
-//                                    current.playVideo(item?.param)
-                    }
-                }
-            }
+}
 
-            2 -> {
-                val pagingItems = viewModel.upResult.collectAsLazyPagingItems()
-                List(lazyPagingItems = pagingItems) { item ->
-                    UpItem(item)
+@Composable
+private fun SearchPageBuilder(
+    it: Int,
+    viewModel: VideoSearchViewModel,
+    current: Context
+) {
+    when (it) {
+        0 -> {
+            List(viewModel.videoResult.collectAsLazyPagingItems()) { item ->
+                VideoItem(
+                    item?.cover,
+                    item?.title.orEmpty(),
+                    item?.author.orEmpty()
+                ) {
+                    current.playVideo(item?.param, item?.param, "archive")
                 }
             }
         }
 
+        1 -> {
+            val pagingItems =
+                viewModel.bangumiResult.collectAsLazyPagingItems()
+            List(lazyPagingItems = pagingItems) { item ->
+                VideoItem(
+                    item?.cover,
+                    item?.title.orEmpty(),
+                    item?.cat_desc.orEmpty()
+                ) {
+//                                    current.playVideo(item?.param)
+                }
+            }
+        }
+
+        2 -> {
+            val pagingItems = viewModel.upResult.collectAsLazyPagingItems()
+            List(lazyPagingItems = pagingItems) { item ->
+                UpItem(item)
+            }
+        }
     }
 }
 
@@ -514,3 +532,8 @@ class SearchBangumiSource(private val keyword: String) : PagingSource<Int, Searc
 fun <T> ResultInfo<T>.error(): Exception {
     return java.lang.Exception("$code $message")
 }
+
+fun <T> ResultInfo2<T>.error(): Exception {
+    return java.lang.Exception("$code $message")
+}
+

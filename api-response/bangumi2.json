@@ -1,0 +1,796 @@
+{
+  "code": 0,
+  "message": "success",
+  "result": {
+    "main_section": {
+      "episodes": [
+        {
+          "aid": 256833820,
+          "badge": "会员",
+          "badge_info": {
+            "bg_color": "#FB7299",
+            "bg_color_night": "#BB5B76",
+            "text": "会员"
+          },
+          "badge_type": 0,
+          "cid": 744358767,
+          "cover": "http://i0.hdslb.com/bfs/archive/4e2da981dfb296c114837b591dea8bd027aebfc0.jpg",
+          "from": "bangumi",
+          "id": 511805,
+          "is_premiere": 0,
+          "long_title": "司马迁 往事不成空",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep511805",
+          "status": 13,
+          "title": "1",
+          "vid": ""
+        },
+        {
+          "aid": 214390336,
+          "badge": "会员",
+          "badge_info": {
+            "bg_color": "#FB7299",
+            "bg_color_night": "#BB5B76",
+            "text": "会员"
+          },
+          "badge_type": 0,
+          "cid": 738617516,
+          "cover": "http://i0.hdslb.com/bfs/archive/238b3f20db852eff95db7a9a475a8d3c59110b0b.jpg",
+          "from": "bangumi",
+          "id": 511806,
+          "is_premiere": 0,
+          "long_title": "耿恭 天山下的勇士",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep511806",
+          "status": 13,
+          "title": "2",
+          "vid": ""
+        },
+        {
+          "aid": 214738265,
+          "badge": "会员",
+          "badge_info": {
+            "bg_color": "#FB7299",
+            "bg_color_night": "#BB5B76",
+            "text": "会员"
+          },
+          "badge_type": 0,
+          "cid": 738619459,
+          "cover": "http://i0.hdslb.com/bfs/archive/c1179c306a08574e8ea3c7e0f287975d113af2ca.jpg",
+          "from": "bangumi",
+          "id": 511807,
+          "is_premiere": 0,
+          "long_title": "魏征 皓皓良臣",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep511807",
+          "status": 13,
+          "title": "3",
+          "vid": ""
+        },
+        {
+          "aid": 769944346,
+          "badge": "会员",
+          "badge_info": {
+            "bg_color": "#FB7299",
+            "bg_color_night": "#BB5B76",
+            "text": "会员"
+          },
+          "badge_type": 0,
+          "cid": 746789516,
+          "cover": "http://i0.hdslb.com/bfs/archive/3051ef3c2e6cc1d28de385205caa4955e1a831ca.jpg",
+          "from": "bangumi",
+          "id": 511808,
+          "is_premiere": 0,
+          "long_title": "戚继光 但愿海波平",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep511808",
+          "status": 13,
+          "title": "4",
+          "vid": ""
+        },
+        {
+          "aid": 512515192,
+          "badge": "会员",
+          "badge_info": {
+            "bg_color": "#FB7299",
+            "bg_color_night": "#BB5B76",
+            "text": "会员"
+          },
+          "badge_type": 0,
+          "cid": 750518529,
+          "cover": "http://i0.hdslb.com/bfs/archive/109f1c52849171a7e6b93124bb5326d8a30f7d50.jpg",
+          "from": "bangumi",
+          "id": 511809,
+          "is_premiere": 0,
+          "long_title": "梁红玉 鸣鼓之花",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep511809",
+          "status": 13,
+          "title": "5",
+          "vid": ""
+        },
+        {
+          "aid": 600274903,
+          "badge": "会员",
+          "badge_info": {
+            "bg_color": "#FB7299",
+            "bg_color_night": "#BB5B76",
+            "text": "会员"
+          },
+          "badge_type": 0,
+          "cid": 760016014,
+          "cover": "http://i0.hdslb.com/bfs/archive/206394dea721d3ea4d580a27f16bd4ec01b86f84.jpg",
+          "from": "bangumi",
+          "id": 511810,
+          "is_premiere": 0,
+          "long_title": "霍去病 一骑绝尘",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep511810",
+          "status": 13,
+          "title": "6",
+          "vid": ""
+        }
+      ],
+      "id": 62876,
+      "title": "正片",
+      "type": 0
+    },
+    "section": [
+      {
+        "episodes": [
+          {
+            "aid": 384416038,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 729362353,
+            "cover": "http://i0.hdslb.com/bfs/archive/5d2177b1b621d5e0bd3063d9ed172c265d294868.jpg",
+            "from": "bangumi",
+            "id": 514123,
+            "is_premiere": 0,
+            "long_title": "司马迁撰写的是历史，歌颂的却是心中的英雄",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep514123",
+            "status": 2,
+            "title": "武黎嵩讲先秦两汉史",
+            "vid": ""
+          },
+          {
+            "aid": 511785091,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 728412311,
+            "cover": "http://i0.hdslb.com/bfs/archive/f4771f1a71c52df442c4526ba74d199f7dfc5165.jpg",
+            "from": "bangumi",
+            "id": 514124,
+            "is_premiere": 0,
+            "long_title": "敢问足下 此书当得我再活一世否？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep514124",
+            "status": 2,
+            "title": "海棠家的大肥鱼",
+            "vid": ""
+          },
+          {
+            "aid": 896875609,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 730919800,
+            "cover": "http://i0.hdslb.com/bfs/archive/13cf77a1e17da5e7834938f0e42dd3dfcf8be71e.jpg",
+            "from": "bangumi",
+            "id": 515060,
+            "is_premiere": 0,
+            "long_title": "“烽火戏诸侯”是司马迁乱写的么？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep515060",
+            "status": 2,
+            "title": "安森垚",
+            "vid": ""
+          },
+          {
+            "aid": 257060345,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 732764758,
+            "cover": "http://i0.hdslb.com/bfs/archive/1ee56063a782df79d1b4ed5ec95d3fd0547412fb.jpg",
+            "from": "bangumi",
+            "id": 515816,
+            "is_premiere": 0,
+            "long_title": "假如穿越去古代休假！你会选哪个朝代？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep515816",
+            "status": 2,
+            "title": "混知",
+            "vid": ""
+          },
+          {
+            "aid": 300067160,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 748956192,
+            "cover": "http://i0.hdslb.com/bfs/archive/1a1c27113b34ea538f28d50399b7bd1850321272.jpg",
+            "from": "bangumi",
+            "id": 518491,
+            "is_premiere": 0,
+            "long_title": "大汉孤军靠什么守住孤城？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep518491",
+            "status": 2,
+            "title": "御史房",
+            "vid": ""
+          },
+          {
+            "aid": 769671083,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 736676957,
+            "cover": "http://i0.hdslb.com/bfs/archive/bfda728ed9d72e923ac6be7c407f00b3c3f5874a.jpg",
+            "from": "bangumi",
+            "id": 518876,
+            "is_premiere": 0,
+            "long_title": "他虽铩羽而归，仍是中华民族不屈的脊梁",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep518876",
+            "status": 2,
+            "title": "武黎嵩讲先秦两汉史",
+            "vid": ""
+          },
+          {
+            "aid": 981804662,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 728750146,
+            "cover": "http://i0.hdslb.com/bfs/archive/5e24dabb19a95d698970628999dbbb34b877229a.jpg",
+            "from": "bangumi",
+            "id": 518877,
+            "is_premiere": 0,
+            "long_title": "《大汉与匈奴四百年的斗争史》",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep518877",
+            "status": 2,
+            "title": "江湖弃子",
+            "vid": ""
+          },
+          {
+            "aid": 939841633,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 741973524,
+            "cover": "http://i0.hdslb.com/bfs/archive/b0f3255390197fbed4e6796d0564267385a5ccbb.jpg",
+            "from": "bangumi",
+            "id": 518878,
+            "is_premiere": 0,
+            "long_title": "你可能不知道的魏征：性格有巨大反差，他死后李世民推倒他的功德碑又重立",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep518878",
+            "status": 2,
+            "title": "于赓哲老师",
+            "vid": ""
+          },
+          {
+            "aid": 642441441,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 746668272,
+            "cover": "http://i0.hdslb.com/bfs/archive/42d48b49b95dbcd74dad97c3969f897e21ba0386.jpg",
+            "from": "bangumi",
+            "id": 518879,
+            "is_premiere": 0,
+            "long_title": "500年前练出一支现代军队，会打出什么离谱战绩？【毒舌的南瓜】",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep518879",
+            "status": 2,
+            "title": "毒舌的南瓜",
+            "vid": ""
+          },
+          {
+            "aid": 427540066,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 749576003,
+            "cover": "http://i0.hdslb.com/bfs/archive/b41fa95fb947144c7eb148edad51a9d0b85161e1.jpg",
+            "from": "bangumi",
+            "id": 519425,
+            "is_premiere": 0,
+            "long_title": "明朝倭乱从何而来?为何说戚继光是平倭而非抗倭？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep519425",
+            "status": 2,
+            "title": "方志远讲明史",
+            "vid": ""
+          },
+          {
+            "aid": 555017200,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 747664420,
+            "cover": "http://i0.hdslb.com/bfs/archive/f691e2eea94ecb534cd9a6718e7c3e4a17d9ace2.jpg",
+            "from": "bangumi",
+            "id": 519428,
+            "is_premiere": 0,
+            "long_title": "【超燃混剪】“封狼居胥霍去病，死守疏勒耿伯宗”",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep519428",
+            "status": 2,
+            "title": "荆楚者云",
+            "vid": ""
+          },
+          {
+            "aid": 512780481,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 754679263,
+            "cover": "http://i0.hdslb.com/bfs/archive/05b9e2624ad2ca82d6d4a4b3d5af9961bb5444de.jpg",
+            "from": "bangumi",
+            "id": 520432,
+            "is_premiere": 0,
+            "long_title": "“列位女将，史书上应有你浓彩重墨的一笔！”",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep520432",
+            "status": 2,
+            "title": "长安南烟斋",
+            "vid": ""
+          },
+          {
+            "aid": 385219892,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 751570330,
+            "cover": "http://i0.hdslb.com/bfs/archive/1b4e2bb7b84e1299e915f323f689a6287747f3d6.jpg",
+            "from": "bangumi",
+            "id": 520433,
+            "is_premiere": 0,
+            "long_title": "她会不会拿了重生剧本？梁红玉：将门女沦为营妓，绝地逆袭改国运！",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep520433",
+            "status": 2,
+            "title": "阿鱼爱学习本人",
+            "vid": ""
+          },
+          {
+            "aid": 427709108,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 753741991,
+            "cover": "http://i0.hdslb.com/bfs/archive/23a02ec9bb62f2ac734d4ffa0140bbd8d1ed15dc.jpg",
+            "from": "bangumi",
+            "id": 520434,
+            "is_premiere": 0,
+            "long_title": "戚继光其实还是大文学家？不被熟知的“文人”戚继光",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep520434",
+            "status": 2,
+            "title": "方志远讲明史",
+            "vid": ""
+          },
+          {
+            "aid": 300368473,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 755076826,
+            "cover": "http://i0.hdslb.com/bfs/archive/3390546ad5f9cf2defffac4f682d07129a7ef15d.jpg",
+            "from": "bangumi",
+            "id": 541790,
+            "is_premiere": 0,
+            "long_title": "文能全国第一，武能挽救中国，这是什么级别的猛男？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep541790",
+            "status": 2,
+            "title": "四月是我的生日",
+            "vid": ""
+          },
+          {
+            "aid": 897808780,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 757084728,
+            "cover": "http://i0.hdslb.com/bfs/archive/73f3ebc4c5beafe4983eb480c1106b299ff7e670.jpg",
+            "from": "bangumi",
+            "id": 568278,
+            "is_premiere": 0,
+            "long_title": "大汉最强外挂霍去病，牛在哪里？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep568278",
+            "status": 2,
+            "title": "天才简史",
+            "vid": ""
+          },
+          {
+            "aid": 642843358,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 757464455,
+            "cover": "http://i0.hdslb.com/bfs/archive/69c99e7236b66bdc805fd881bb3d209c4abc60db.jpg",
+            "from": "bangumi",
+            "id": 584233,
+            "is_premiere": 0,
+            "long_title": "他，是上天赐予大汉的限时外挂！",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep584233",
+            "status": 2,
+            "title": "海棠家的大肥鱼",
+            "vid": ""
+          },
+          {
+            "aid": 597934795,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 761030732,
+            "cover": "http://i0.hdslb.com/bfs/archive/366e6759d6a0b0163031f063bcf5c367ef75754c.jpg",
+            "from": "bangumi",
+            "id": 598494,
+            "is_premiere": 0,
+            "long_title": "二十岁驰骋沙场，战神霍去病有多强？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep598494",
+            "status": 2,
+            "title": "武黎嵩讲先秦两汉史",
+            "vid": ""
+          },
+          {
+            "aid": 343048771,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 763781774,
+            "cover": "http://i0.hdslb.com/bfs/archive/cd86600011b876a70fa51d0ef8840ebd87c92f6e.jpg",
+            "from": "bangumi",
+            "id": 607064,
+            "is_premiere": 0,
+            "long_title": "汉武帝发动漠北决战，我帮他写了篇檄文！全网唯一！！",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep607064",
+            "status": 2,
+            "title": "有山先生",
+            "vid": ""
+          },
+          {
+            "aid": 258088877,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 764460751,
+            "cover": "http://i0.hdslb.com/bfs/archive/496743bdbb0de046817b7b9961d074a19838488e.jpg",
+            "from": "bangumi",
+            "id": 619796,
+            "is_premiere": 0,
+            "long_title": "单 骑 救 主",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep619796",
+            "status": 2,
+            "title": "冷淡熊",
+            "vid": ""
+          }
+        ],
+        "id": 79268,
+        "title": "UP主特别企划",
+        "type": 2
+      },
+      {
+        "episodes": [
+          {
+            "aid": 554257013,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 752353726,
+            "cover": "http://i0.hdslb.com/bfs/archive/8e14596b140bd272c99e9cbee4538c817e543589.jpg",
+            "from": "bangumi",
+            "id": 513986,
+            "is_premiere": 0,
+            "long_title": "太史公的“一家之言”究竟是什么？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep513986",
+            "status": 2,
+            "title": "第1期",
+            "vid": ""
+          },
+          {
+            "aid": 727040393,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 736377223,
+            "cover": "http://i0.hdslb.com/bfs/archive/955eb4df74fe91285d6ba5ab957c8c4ebc3c53cf.jpg",
+            "from": "bangumi",
+            "id": 515333,
+            "is_premiere": 0,
+            "long_title": "家族压力狂卷！东汉最“硬”狠人！",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep515333",
+            "status": 2,
+            "title": "第2期",
+            "vid": ""
+          },
+          {
+            "aid": 512263585,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 740340049,
+            "cover": "http://i0.hdslb.com/bfs/archive/4a3f5c5d916b062f024e85093d0b860168a57019.jpg",
+            "from": "bangumi",
+            "id": 516183,
+            "is_premiere": 0,
+            "long_title": "明君与良臣，李二凤和魏征的“完美人设”",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep516183",
+            "status": 2,
+            "title": "第3期",
+            "vid": ""
+          },
+          {
+            "aid": 512417736,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 747637612,
+            "cover": "http://i0.hdslb.com/bfs/archive/e9934dfe65d3471578b328a8d0c444bacfd675dd.jpg",
+            "from": "bangumi",
+            "id": 518219,
+            "is_premiere": 0,
+            "long_title": "如果戚继光是清流，还能打倭寇吗？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep518219",
+            "status": 2,
+            "title": "第4期",
+            "vid": ""
+          },
+          {
+            "aid": 470223778,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 752328120,
+            "cover": "http://i0.hdslb.com/bfs/archive/a65896f7c836d1bf0cc24479b1f8ac12398573cd.jpg",
+            "from": "bangumi",
+            "id": 520021,
+            "is_premiere": 0,
+            "long_title": "营妓变将军，一个改变了宋朝命运的女人",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep520021",
+            "status": 2,
+            "title": "第5期",
+            "vid": ""
+          },
+          {
+            "aid": 642982606,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 759840394,
+            "cover": "http://i0.hdslb.com/bfs/archive/83b320157ad5617ccdfa9c51c17bedd560749644.jpg",
+            "from": "bangumi",
+            "id": 567734,
+            "is_premiere": 0,
+            "long_title": "霍去病是一个什么样的人？他为什么能缔造武将的至高荣誉？",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep567734",
+            "status": 2,
+            "title": "第6期",
+            "vid": ""
+          }
+        ],
+        "id": 79246,
+        "title": "铁木说",
+        "type": 2
+      },
+      {
+        "episodes": [
+          {
+            "aid": 214444059,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 730305084,
+            "cover": "http://i0.hdslb.com/bfs/archive/7687752e1e0f9fac9e762b7383dcfb1f60de8c6e.jpg",
+            "from": "bangumi",
+            "id": 514593,
+            "is_premiere": 0,
+            "long_title": "不朽的歌",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep514593",
+            "status": 2,
+            "title": "三无Marblue",
+            "vid": ""
+          },
+          {
+            "aid": 427161990,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 736478670,
+            "cover": "http://i0.hdslb.com/bfs/archive/4fdc1aafedf39ebfc9cfeda93c8d5a05a4a3e3b3.jpg",
+            "from": "bangumi",
+            "id": 515677,
+            "is_premiere": 0,
+            "long_title": "一身勇",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep515677",
+            "status": 2,
+            "title": "李行亮",
+            "vid": ""
+          },
+          {
+            "aid": 214906336,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 742872837,
+            "cover": "http://i0.hdslb.com/bfs/archive/ad4bf38097c7a37c20c22396ba86c6c84e18a9d6.jpg",
+            "from": "bangumi",
+            "id": 517023,
+            "is_premiere": 0,
+            "long_title": "诤",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep517023",
+            "status": 2,
+            "title": "老胡Khufu",
+            "vid": ""
+          },
+          {
+            "aid": 427567272,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 749591153,
+            "cover": "http://i0.hdslb.com/bfs/archive/af93859b7c01df81adf4f77aa124457fcb13204e.jpg",
+            "from": "bangumi",
+            "id": 518950,
+            "is_premiere": 0,
+            "long_title": "将",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep518950",
+            "status": 2,
+            "title": "刘悦spam aka生番",
+            "vid": ""
+          },
+          {
+            "aid": 812865247,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 754591457,
+            "cover": "http://i0.hdslb.com/bfs/archive/1117fb7b1bb0931a2666bbe99882e1468370b410.jpg",
+            "from": "bangumi",
+            "id": 542685,
+            "is_premiere": 0,
+            "long_title": "击鼓之花",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep542685",
+            "status": 2,
+            "title": "高姗",
+            "vid": ""
+          },
+          {
+            "aid": 727918192,
+            "badge": "",
+            "badge_info": {
+              "bg_color": "#FB7299",
+              "bg_color_night": "#BB5B76",
+              "text": ""
+            },
+            "badge_type": 0,
+            "cid": 760789603,
+            "cover": "http://i0.hdslb.com/bfs/archive/5da6c1007c7df7fcab16be44980bf2626840cd79.jpg",
+            "from": "bangumi",
+            "id": 567742,
+            "is_premiere": 0,
+            "long_title": "霍去病",
+            "share_url": "https://www.bilibili.com/bangumi/play/ep567742",
+            "status": 2,
+            "title": "打扰一下乐团",
+            "vid": ""
+          }
+        ],
+        "id": 79343,
+        "title": "人物主题曲",
+        "type": 2
+      }
+    ]
+  }
+}

@@ -1,6 +1,5 @@
 package com.storyteller_f.bi.components
 
-import android.content.Intent
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
@@ -24,28 +23,10 @@ import com.a10miaomiao.bilimiao.comm.entity.media.MediasInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
 import com.storyteller_f.bi.StateView
-import com.storyteller_f.bi.VideoActivity
+import com.storyteller_f.bi.defaultFactory
 import com.storyteller_f.bi.playVideo
 
 object FavoriteIdKey : CreationExtras.Key<String>
-
-val defaultFactory = object : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-        val t = when (modelClass) {
-            FavoriteDetailViewModel::class.java -> FavoriteDetailViewModel(extras[FavoriteIdKey]!!)
-            VideoViewModel::class.java -> VideoViewModel(extras[VideoIdKey]!!)
-            CommentViewModel::class.java -> CommentViewModel(extras[VideoIdKey]!!)
-            CommentReplyViewModel::class.java -> CommentReplyViewModel(
-                extras[VideoIdLongKey]!!,
-                extras[CommentIdKey]!!
-            )
-            VideoSearchViewModel::class.java -> VideoSearchViewModel()
-            UserBannerViewModel::class.java -> UserBannerViewModel()
-            else -> super.create(modelClass, extras)
-        }
-        return modelClass.cast(t)!!
-    }
-}
 
 @Composable
 fun FavoriteDetailPage(id: String) {
@@ -70,7 +51,7 @@ fun FavoriteDetailPage(id: String) {
                     item?.title.orEmpty(),
                     item?.upper?.name.orEmpty()
                 ) {
-                    current.playVideo(item?.id, 0)
+                    current.playVideo(item?.id, item?.id, "archive", 0)
                 }
             }
         }
