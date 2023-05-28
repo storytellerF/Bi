@@ -97,9 +97,9 @@ dependencies {
     def paging_version = "3.1.1"
 
     implementation "androidx.paging:paging-runtime-ktx:$paging_version"
-    implementation "androidx.paging:paging-compose:1.0.0-alpha19"
+    implementation "androidx.paging:paging-compose:1.0.0-alpha20"
     implementation("com.github.storytellerF.Bao:startup:2.2.0")
-    implementation "androidx.compose.material3:material3-window-size-class:1.2.0-alpha01"
+    implementation "androidx.compose.material3:material3-window-size-class:1.2.0-alpha02"
 
 }
 def checkUnstableCode = tasks.register("unstableCodeCheck") {
@@ -112,7 +112,7 @@ def checkUnstableCode = tasks.register("unstableCodeCheck") {
 		new String[]{"app/$comm/delegate/player/model/DashSource.kt", "c4e6218d5b6f8aa7828df6a4ec1f63922f63fe8b"},
 		new String[]{"app/$comm/delegate/player/model/VideoPlayerSource.kt", "92791523f7596d6ef31ab1011a184b60289ea074"},
 		new String[]{"app/$comm/delegate/player/PlayerDelegate2.kt", "c4e6218d5b6f8aa7828df6a4ec1f63922f63fe8b"},
-		new String[]{"bilimiao-comm/$comm/store/UserStore.kt", "ddc8ffca985dded2a14a5e61f16140fd7084e800"},
+		new String[]{"bilimiao-comm/$comm/store/UserStore.kt", "d6d7f0ffeabd9e873dddbc3b414d5daa500df8db"},
 		new String[]{"app/$page/user/HistoryViewModel.kt", "e28e3bdf26f5a03d27e645039bbfaf30f61d6e7c"},
 		new String[]{"app/$page/home/DynamicViewModel.kt", "4c176e50ff5ad23ce8b69a0a9d2e919b7ceaac54"},
 		new String[]{"app/$page/user/favourite/UserFavouriteListViewModel.kt", "fde19ddecd807f972f19ae41ecbbcc23b91b2ada"},
