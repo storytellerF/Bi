@@ -2,7 +2,7 @@ package com.storyteller_f.bi.unstable
 
 import android.content.Context
 import android.net.Uri
-import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
+import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerRepository
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
 import com.google.android.exoplayer2.source.MediaSource
@@ -15,7 +15,7 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.storyteller_f.bi.subtitleMediaSources
 
 class PlayerDelegate {
-    suspend fun mediaSource(context: Context, source: BasePlayerSource): MediaSource {
+    suspend fun mediaSource(context: Context, source: BasePlayerRepository): MediaSource {
         val dataSource = source.getPlayerUrl(64, 1).url
         val dataSourceArr = dataSource.split("\n")
         val subtitleMediaSources = source.subtitleMediaSources(context)
@@ -81,7 +81,7 @@ class PlayerDelegate {
         }
     }
 
-    private fun getDefaultRequestProperties(playerSource: BasePlayerSource): Map<String, String> {
+    private fun getDefaultRequestProperties(playerSource: BasePlayerRepository): Map<String, String> {
         val header = HashMap<String, String>()
         if (playerSource is VideoPlayerRepository) {
             header["Referer"] = DEFAULT_REFERER

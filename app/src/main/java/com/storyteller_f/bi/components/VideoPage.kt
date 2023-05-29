@@ -21,12 +21,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -61,7 +62,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import bilibili.main.community.reply.v1.ReplyOuterClass
-import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
+import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerRepository
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
 import com.a10miaomiao.bilimiao.comm.entity.video.VideoInfo
 import com.a10miaomiao.bilimiao.comm.entity.video.VideoOwnerInfo
@@ -93,22 +94,27 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
-class PlayerKit(val size: VideoSize?, val mediaSource: MediaSource?, val progress: Long, val player: ExoPlayer, val reportHistory: () -> Unit) {
-
-}
+class PlayerKit(
+    val size: VideoSize?,
+    val mediaSource: MediaSource?,
+    val progress: Long,
+    val player: ExoPlayer,
+    val reportHistory: () -> Unit
+)
 
 @Composable
-fun rememberPlayerKit(videoPlayerRepository: BasePlayerSource?, initProgress: Long): State<PlayerKit> {
+fun rememberPlayerKit(
+    videoPlayerRepository: BasePlayerRepository?,
+    initProgress: Long
+): State<PlayerKit> {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var mediaSource by remember {
-        mutableStateOf<MediaSource?>(null)
-    }
+
     var size by remember {
         mutableStateOf<VideoSize?>(null)
     }
     var progress by remember {
-        mutableStateOf(initProgress.coerceAtLeast(0L).seconds.inWholeMilliseconds)
+        mutableLongStateOf(initProgress.coerceAtLeast(0L).seconds.inWholeMilliseconds)
     }
 
     val player = remember {
@@ -138,14 +144,12 @@ fun rememberPlayerKit(videoPlayerRepository: BasePlayerSource?, initProgress: Lo
             player.release()
         }
     })
-    LaunchedEffect(key1 = videoPlayerRepository) {
-        Log.d("VideoPage", "VideoPage() called try get source $videoPlayerRepository")
-        videoPlayerRepository?.let {
-            mediaSource = withContext(Dispatchers.IO) {
-                PlayerDelegate().mediaSource(context, it)
+    val mediaSource by produceState<MediaSource?>(initialValue = null, key1 = videoPlayerRepository) {
+        value = if (videoPlayerRepository != null)
+            withContext(Dispatchers.IO) {
+                PlayerDelegate().mediaSource(context, videoPlayerRepository)
             }
-        }
-
+        else null
     }
     return remember {
         derivedStateOf {
@@ -198,8 +202,8 @@ fun VideoPage(
             if (!videoOnly)
                 Text(text = videoId)
             VideoFrame(
+                videoPlayerRepository,
                 playerKit,
-                videoInfo?.pic,
                 !(potentialPortrait && videoOnly),//竖屏全屏时不用保持16:9的画面比例
                 requestVideoOnly
             )
@@ -224,12 +228,12 @@ fun VideoPage(
 @Composable
 @OptIn(ExperimentalGlideComposeApi::class)
 fun VideoFrame(
+    videoPlayerRepository: BasePlayerRepository?,
     playerKit: PlayerKit,
-    cover: String?,
     aspectRatio: Boolean,
     requestVideoOnly: ((Boolean) -> Unit)?
 ) {
-
+    val cover = videoPlayerRepository?.coverUrl
     val mediaSource = playerKit.mediaSource
     if (mediaSource != null) {
         Log.d("VideoPage", "VideoPage() called VideoView ${playerKit.progress}")

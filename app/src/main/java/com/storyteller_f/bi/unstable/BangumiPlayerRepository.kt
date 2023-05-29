@@ -1,6 +1,6 @@
 package com.storyteller_f.bi.unstable
 
-import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
+import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerRepository
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.PlayerSourceInfo
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.SubtitleSourceInfo
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
@@ -19,7 +19,7 @@ class BangumiPlayerRepository(
     override val coverUrl: String,
     override val ownerId: String,
     override val ownerName: String,
-): BasePlayerSource() {
+): BasePlayerRepository() {
 
     override suspend fun getPlayerUrl(quality: Int, fnval: Int): PlayerSourceInfo {
         val res = proxyServer?.let {

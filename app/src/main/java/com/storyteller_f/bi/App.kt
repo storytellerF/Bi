@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.core.net.toUri
 import com.a10miaomiao.bilimiao.comm.BilimiaoCommApp
-import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerSource
+import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerRepository
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.SubtitleSourceInfo
 import com.a10miaomiao.bilimiao.comm.entity.player.SubtitleJsonInfo
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp
@@ -38,7 +38,7 @@ class App : Application() {
     }
 }
 
-suspend fun BasePlayerSource.subtitleMediaSources(
+suspend fun BasePlayerRepository.subtitleMediaSources(
     context: Context
 ): List<SingleSampleMediaSource> {
     return subtitleConfigurations(context).map {
@@ -47,7 +47,7 @@ suspend fun BasePlayerSource.subtitleMediaSources(
     }
 }
 
-suspend fun BasePlayerSource.subtitleConfigurations(
+suspend fun BasePlayerRepository.subtitleConfigurations(
     context: Context
 ): List<MediaItem.SubtitleConfiguration> {
 

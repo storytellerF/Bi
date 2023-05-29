@@ -143,8 +143,8 @@ fun BangumiPage(id: String, seasonId: String) {
         Column {
             Text(text = "id $id season $seasonId")
             VideoFrame(
+                bangumiPlayerRepository,
                 playerKit,
-                cover = info?.cover,
                 aspectRatio = true,
                 requestVideoOnly = null
             )
