@@ -144,10 +144,17 @@ fun rememberPlayerKit(
             player.release()
         }
     })
-    val mediaSource by produceState<MediaSource?>(initialValue = null, key1 = videoPlayerRepository) {
+    val mediaSource by produceState<MediaSource?>(
+        initialValue = null,
+        key1 = videoPlayerRepository
+    ) {
         value = if (videoPlayerRepository != null)
-            withContext(Dispatchers.IO) {
-                PlayerDelegate().mediaSource(context, videoPlayerRepository)
+            try {
+                withContext(Dispatchers.IO) {
+                    PlayerDelegate().mediaSource(context, videoPlayerRepository)
+                }
+            } catch (e: Exception) {
+                null
             }
         else null
     }
@@ -177,7 +184,7 @@ fun VideoPage(
     }
     val uiControl = rememberSystemUiController()
     val videoInfo by videoViewModel.info.observeAsState()
-    val videoPlayerRepository by videoViewModel.playerSource.observeAsState()
+    val videoPlayerRepository by videoViewModel.currentVideoRepository.observeAsState()
     val loadingState by videoViewModel.state.observeAsState()
     val playerKit by rememberPlayerKit(
         videoPlayerRepository = videoPlayerRepository,
@@ -445,7 +452,7 @@ object CommentId : CreationExtras.Key<Long>
 class VideoViewModel(private val videoId: String) : ViewModel() {
     val state = MutableLiveData<LoadingState>()
     val info = MutableLiveData<VideoInfo>()
-    val playerSource = info.map { info ->
+    val currentVideoRepository = info.map { info ->
         VideoPlayerRepository(
             title = info.title,
             coverUrl = info.pic,

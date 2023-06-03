@@ -1,17 +1,20 @@
 package com.storyteller_f.bi
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import com.a10miaomiao.bilimiao.comm.entity.ResultInfo2
 import com.storyteller_f.bi.components.BangumiViewModel
 import com.storyteller_f.bi.components.CommentId
 import com.storyteller_f.bi.components.CommentReplyViewModel
@@ -24,6 +27,9 @@ import com.storyteller_f.bi.components.VideoId
 import com.storyteller_f.bi.components.VideoIdLong
 import com.storyteller_f.bi.components.VideoSearchViewModel
 import com.storyteller_f.bi.components.VideoViewModel
+import com.storyteller_f.bi.components.error
+import com.storyteller_f.bi.components.loaded
+import com.storyteller_f.bi.components.loading
 
 sealed class LoadingState {
     class Loading(val state: String) : LoadingState()
@@ -126,5 +132,42 @@ val defaultFactory = object : ViewModelProvider.Factory {
             else -> super.create(modelClass, extras)
         }
         return modelClass.cast(t)!!
+    }
+}
+
+inline fun <T, R> request(
+    state: MutableLiveData<LoadingState>,
+    data: MutableLiveData<R>,
+    service: () -> ResultInfo2<T>,
+    build: (T) -> R
+) {
+    try {
+        val res = service()
+        val result = res.result
+        if (res.isSuccess && result != null) {
+            data.value = build(result)
+            state.loaded()
+        } else state.error(res.error())
+    } catch (e: Exception) {
+        state.error(e)
+    }
+}
+
+inline fun <T> request(
+    state: MutableLiveData<LoadingState>,
+    data: MutableLiveData<T>,
+    service: () -> ResultInfo2<T>,
+) {
+    state.loading()
+    try {
+        val res = service()
+        val result = res.result
+        if (res.isSuccess && result != null) {
+            data.value = result
+            state.loaded()
+        } else state.error(res.error())
+    } catch (e: Exception) {
+        Log.e("request", "request: ", e)
+        state.error(e)
     }
 }
