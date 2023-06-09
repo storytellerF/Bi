@@ -113,7 +113,8 @@ class FavoriteViewModel : ViewModel() {
             try {
                 val mid = userInfo.value?.mid?.toString().orEmpty()
                 if (mid.isNotEmpty()) {
-                    val res = BiliApiService.userApi.favFolderList(mid).awaitCall()
+                    //todo 分页
+                    val res = BiliApiService.userApi.favFolderList(mid, 1, 20).awaitCall()
                         .gson<ResultInfo<UserSpaceFavFolderInfo>>()
                     if (res.code == 0) {
                         val info = res.data

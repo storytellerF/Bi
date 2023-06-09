@@ -48,6 +48,7 @@ fun MutableLiveData<LoadingState>.loading(message: String = "") {
     value = LoadingState.Loading(message)
 }
 
+//todo 增加搜索功能
 class HistoryViewModel : ViewModel() {
     val flow = Pager(
         PagingConfig(pageSize = 20)
@@ -69,8 +70,7 @@ fun HistoryPage(openVideo: (String, String, String, Long) -> Unit = { _, _, _, _
                 key = lazyItems.itemKey {
                     it.oid.toString() + "" + it.kid.toString()
                 },
-                contentType = lazyItems.itemContentType(
-                )
+                contentType = lazyItems.itemContentType()
             ) { index ->
                 val item = lazyItems[index]
                 val cursorItem = item ?: HistoryOuterClass.CursorItem.getDefaultInstance()
