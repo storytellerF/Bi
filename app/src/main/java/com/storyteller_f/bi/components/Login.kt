@@ -3,6 +3,7 @@ package com.storyteller_f.bi.components
 import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -109,6 +110,7 @@ class QrcodeLoginViewModel(private val context: Application) : AndroidViewModel(
                     val loginInfo = res.data.toLoginInfo()
                     BilimiaoCommApp.commApp.saveAuthInfo(loginInfo)
                     getUserInfo()
+                    checkState.loaded()
                 }
 
                 else -> {
@@ -153,12 +155,17 @@ class LoginPreviewProvider : PreviewParameterProvider<LoginState> {
 @Preview
 @Composable
 fun LoginInternal(
-    @PreviewParameter(LoginPreviewProvider::class) state: LoginState
+    @PreviewParameter(LoginPreviewProvider::class) state: LoginState,
+    back: () -> Unit = {}
 ) {
     val (qrcodeUrl, loadingState, checkState) = state
     val image = (qrcodeUrl ?: "qrcode not ready").createQRImage(200, 200)
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
         val widthDp = LocalConfiguration.current.smallestScreenWidthDp - 100
         Box(contentAlignment = Alignment.Center) {
             Image(
@@ -189,9 +196,13 @@ fun LoginInternal(
                 modifier = Modifier
                     .padding(top = 8.dp)
                     .background(MaterialTheme.colorScheme.secondaryContainer)
-                    .padding(8.dp),
+                    .padding(8.dp)
+                    .clickable {
+                        if (checkState is LoadingState.Done)
+                            back()
+                    },
                 text = when (checkState) {
-                    is LoadingState.Done -> "扫码成功"
+                    is LoadingState.Done -> "扫码成功，点击返回"
                     is LoadingState.Loading -> checkState.state
                     is LoadingState.Error -> checkState.e.localizedMessage
                 }
@@ -201,10 +212,10 @@ fun LoginInternal(
 }
 
 @Composable
-fun LoginPage() {
+fun LoginPage(back: () -> Unit) {
     val loginViewModel = viewModel<QrcodeLoginViewModel>()
     val loadingState by loginViewModel.state.observeAsState()
     val url by loginViewModel.qrcodeUrl.observeAsState()
     val checkState by loginViewModel.checkState.observeAsState()
-    LoginInternal(LoginState(url, loadingState, checkState))
+    LoginInternal(LoginState(url, loadingState, checkState), back)
 }

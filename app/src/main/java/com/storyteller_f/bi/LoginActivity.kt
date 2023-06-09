@@ -13,7 +13,9 @@ class LoginActivity : ComponentActivity() {
         setContent {
             BiTheme {
                 Surface {
-                    LoginPage()
+                    LoginPage {
+                        finish()
+                    }
                 }
             }
         }
