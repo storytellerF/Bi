@@ -111,9 +111,9 @@ def checkUnstableCode = tasks.register("unstableCodeCheck") {
     def checkList = List.of(
 		new String[]{"app/$comm/delegate/player/model/DashSource.kt", "c4e6218d5b6f8aa7828df6a4ec1f63922f63fe8b"},
 		new String[]{"app/$comm/delegate/player/model/VideoPlayerSource.kt", "6e08bdbb3f7eb0c0607ce6e4bab851a6519475d0"},
-		new String[]{"app/$comm/delegate/player/PlayerDelegate2.kt", "de8a7b738c8daa2147fd8d6af5dfc57be7b12a03"},
+		new String[]{"app/$comm/delegate/player/PlayerDelegate2.kt", "56cedbd6136df633e27fa712dddd07f2a10325ec"},
 		new String[]{"bilimiao-comm/$comm/store/UserStore.kt", "d6d7f0ffeabd9e873dddbc3b414d5daa500df8db"},
-		new String[]{"app/$page/user/HistoryViewModel.kt", "93fb0a749762464c1c1754481c09192b5792d574"},
+		new String[]{"app/$page/user/HistoryViewModel.kt", "8ea61bf1333d251c9558a457a1d27db3ef758d5f"},
 		new String[]{"app/$page/home/DynamicViewModel.kt", "4c176e50ff5ad23ce8b69a0a9d2e919b7ceaac54"},
 		new String[]{"app/$page/user/favourite/UserFavouriteListViewModel.kt", "c9a46401e5722a1e8ca5295e3431ba1c0711d35c"},
 		new String[]{"app/$page/user/favourite/UserFavouriteDetailViewModel.kt", "5809486d85be851b027f0a24d21a9bed53122eed"},
