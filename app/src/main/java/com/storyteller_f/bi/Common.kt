@@ -3,8 +3,18 @@ package com.storyteller_f.bi
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.MutableLiveData
@@ -30,6 +40,8 @@ import com.storyteller_f.bi.components.VideoViewModel
 import com.storyteller_f.bi.components.error
 import com.storyteller_f.bi.components.loaded
 import com.storyteller_f.bi.components.loading
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 sealed class LoadingState {
     class Loading(val state: String) : LoadingState()
@@ -66,10 +78,28 @@ fun StateView(state: LoadingState?, content: @Composable () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T : Any> StateView(pagingItems: LazyPagingItems<T>, function: @Composable () -> Unit) {
-    StateView(pagingItems.loadState.refresh, pagingItems.itemCount) {
-        function()
+    val refreshScope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }
+    val state = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
+        refreshScope.launch {
+            refreshing = true
+            pagingItems.refresh()
+        }
+    })
+    LaunchedEffect(key1 = refreshing, key2 = pagingItems.loadState.refresh, block = {
+        delay(200)
+        if (refreshing && pagingItems.loadState.refresh !is LoadState.Loading) {
+            refreshing = false
+        }
+    })
+    Box(modifier = Modifier.pullRefresh(state)) {
+        StateView(pagingItems.loadState.refresh, pagingItems.itemCount) {
+            function()
+        }
+        PullRefreshIndicator(refreshing, state, Modifier.align(Alignment.TopCenter))
     }
 }
 

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -24,6 +25,12 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import bilibili.app.interfaces.v1.HistoryOuterClass
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -31,6 +38,7 @@ import com.storyteller_f.bi.Api
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
+import kotlinx.coroutines.launch
 
 fun MutableLiveData<LoadingState>.loaded() {
     value = LoadingState.Done()
@@ -59,11 +67,14 @@ class HistoryViewModel : ViewModel() {
 
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HistoryPage(openVideo: (String, String, String, Long) -> Unit = { _, _, _, _ -> }) {
     val viewModel = viewModel<HistoryViewModel>()
+
     val lazyItems = viewModel.flow.collectAsLazyPagingItems()
-    StateView(state = lazyItems.loadState.refresh) {
+
+    StateView(pagingItems = lazyItems) {
         LazyColumn {
             items(
                 count = lazyItems.itemCount,
