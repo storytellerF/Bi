@@ -32,25 +32,25 @@ import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.storyteller_f.bi.LoadingHandler
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
+import com.storyteller_f.bi.StateViewGeneric
 import com.storyteller_f.bi.unstable.userInfo
 import kotlinx.coroutines.launch
 
 @Composable
 fun FavoritePage(openMediaList: (MediaListInfo) -> Unit = {}) {
     val favoriteViewModel = viewModel<FavoriteViewModel>()
-    val state by favoriteViewModel.state.observeAsState()
-    val data by favoriteViewModel.data.observeAsState()
-    StateView(state = state) {
+    StateViewGeneric(favoriteViewModel.handler) {
         LazyVerticalGrid(GridCells.Adaptive(150.dp)) {
-            data?.default_folder?.folder_detail?.let {
+            it?.default_folder?.folder_detail?.let {
                 item {
                     MediaListContainer(it, openMediaList)
                 }
             }
-            data?.space_infos?.forEach {
+            it?.space_infos?.forEach {
                 item(span = {
                     GridItemSpan(maxLineSpan)
                 }) {
@@ -100,8 +100,9 @@ fun MediaListContainer(@PreviewParameter(MediaListContainerPreviewProvider::clas
 }
 
 class FavoriteViewModel : ViewModel() {
-    val state = MutableLiveData<LoadingState>()
-    val data = MutableLiveData<UserSpaceFavFolderInfo>()
+    val handler = LoadingHandler<UserSpaceFavFolderInfo>(::refresh)
+    val state = handler.state
+    val data = handler.data
 
     init {
         refresh()

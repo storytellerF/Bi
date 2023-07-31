@@ -83,6 +83,7 @@ import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.ui.StyledPlayerView
 import com.google.android.exoplayer2.video.VideoSize
 import com.storyteller_f.bi.Api
+import com.storyteller_f.bi.LoadingHandler
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
@@ -185,7 +186,6 @@ fun VideoPage(
     val uiControl = rememberSystemUiController()
     val videoInfo by videoViewModel.info.observeAsState()
     val videoPlayerRepository by videoViewModel.currentVideoRepository.observeAsState()
-    val loadingState by videoViewModel.state.observeAsState()
     val playerKit by rememberPlayerKit(
         videoPlayerRepository = videoPlayerRepository,
         initProgress = initProgress
@@ -203,7 +203,7 @@ fun VideoPage(
         }
     } else null
     Log.d("VideoPage", "VideoPage() called")
-    StateView(state = loadingState) {
+    StateView(videoViewModel.handler) {
         Log.d("VideoPage", "VideoPage() called StateView")
         Column {
             if (!videoOnly)
@@ -450,8 +450,9 @@ object VideoIdLong : CreationExtras.Key<Long>
 object CommentId : CreationExtras.Key<Long>
 
 class VideoViewModel(private val videoId: String) : ViewModel() {
-    val state = MutableLiveData<LoadingState>()
-    val info = MutableLiveData<VideoInfo>()
+    val handler = LoadingHandler<VideoInfo>(::load)
+    val state = handler.state
+    val info = handler.data
     val currentVideoRepository = info.map { info ->
         VideoPlayerRepository(
             title = info.title,

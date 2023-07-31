@@ -37,7 +37,7 @@ fun FavoriteDetailPage(id: String) {
             set(FavoriteIdKey, id)
         })
     val lazyPagingItems = detailViewModel.flow.collectAsLazyPagingItems()
-    StateView(state = lazyPagingItems.loadState.refresh) {
+    StateView(pagingItems = lazyPagingItems) {
         LazyColumn {
             items(
                 count = lazyPagingItems.itemCount,

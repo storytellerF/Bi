@@ -14,6 +14,7 @@ import bilibili.app.dynamic.v2.Stat
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
+import com.storyteller_f.bi.LoadingHandler
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StateView
 import kotlinx.coroutines.Dispatchers
@@ -23,10 +24,9 @@ import kotlinx.coroutines.withContext
 @Composable
 fun PlaylistPage(openVideo: (String, String, String, Long) -> Unit = {_, _, _, _ ->}) {
     val viewModel = viewModel<ToBePlayedViewModel>()
-    val state by viewModel.state.observeAsState()
     val list by viewModel.datum.observeAsState()
     val data = list?.list.orEmpty()
-    StateView(state = state) {
+    StateView(viewModel.handler) {
         LazyColumn {
             items(data, {
                 it.aid.toString() + " " + it.bvid
@@ -45,8 +45,9 @@ class VideoDatumList(
 )
 
 class ToBePlayedViewModel : ViewModel() {
-    val state = MutableLiveData<LoadingState>()
-    val datum = MutableLiveData<VideoDatumList?>()
+    val handler = LoadingHandler<VideoDatumList?>(::load)
+    val state = handler.state
+    val datum = handler.data
 
     init {
         load()

@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +51,11 @@ sealed class LoadingState {
     class Done(val itemCount: Int = 1) : LoadingState()
 }
 
+class LoadingHandler<T>(val handler: suspend () -> Unit) {
+    val state: MutableLiveData<LoadingState> = MutableLiveData()
+    val data: MutableLiveData<T> = MutableLiveData()
+}
+
 @Composable
 fun OneCenter(content: @Composable () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -78,28 +84,95 @@ fun StateView(state: LoadingState?, content: @Composable () -> Unit) {
     }
 }
 
+@Composable
+fun <T> StateView(state: LoadingState?, t: T?, content: @Composable (T?) -> Unit) {
+    when (state) {
+        null -> OneCenter {
+            Text(text = "waiting")
+        }
+
+        is LoadingState.Loading -> OneCenter {
+            Text(text = "loading")
+        }
+
+        is LoadingState.Error -> OneCenter {
+            Text(text = state.e.localizedMessage.orEmpty())
+        }
+
+        is LoadingState.Done -> if (state.itemCount == 0) OneCenter {
+            Text(text = "empty")
+        } else content(t)
+    }
+}
+
+const val refreshAtLeastDelay = 300L
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun StateView(handler: LoadingHandler<*>, content: @Composable () -> Unit) {
+    val state by handler.state.observeAsState()
+    val refreshScope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }
+    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
+        refreshScope.launch {
+            refreshing = true
+            handler.handler
+        }
+    })
+    LaunchedEffect(key1 = refreshing, key2 = state) {
+        delay(refreshAtLeastDelay)
+        if (refreshing && state !is LoadingState.Loading) refreshing = false
+    }
+    Box(modifier = Modifier.pullRefresh(refreshState)) {
+        StateView(state, content)
+        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun<T> StateViewGeneric(handler: LoadingHandler<T>, content: @Composable (T?) -> Unit) {
+    val state by handler.state.observeAsState()
+    val observeAsState by handler.data.observeAsState()
+    val refreshScope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }
+    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
+        refreshScope.launch {
+            refreshing = true
+            handler.handler
+        }
+    })
+    LaunchedEffect(key1 = refreshing, key2 = state) {
+        delay(refreshAtLeastDelay)
+        if (refreshing && state !is LoadingState.Loading) refreshing = false
+    }
+    Box(modifier = Modifier.pullRefresh(refreshState)) {
+        StateView(state = state, t = observeAsState, content)
+        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
+    }
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T : Any> StateView(pagingItems: LazyPagingItems<T>, function: @Composable () -> Unit) {
     val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
-    val state = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
+    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
         refreshScope.launch {
             refreshing = true
             pagingItems.refresh()
         }
     })
-    LaunchedEffect(key1 = refreshing, key2 = pagingItems.loadState.refresh, block = {
-        delay(200)
-        if (refreshing && pagingItems.loadState.refresh !is LoadState.Loading) {
-            refreshing = false
-        }
-    })
-    Box(modifier = Modifier.pullRefresh(state)) {
-        StateView(pagingItems.loadState.refresh, pagingItems.itemCount) {
+    val refresh = pagingItems.loadState.refresh
+    LaunchedEffect(key1 = refreshing, key2 = refresh) {
+        delay(refreshAtLeastDelay)
+        if (refreshing && refresh !is LoadState.Loading) refreshing = false
+    }
+    Box(modifier = Modifier.pullRefresh(refreshState)) {
+        StateView(refresh, pagingItems.itemCount) {
             function()
         }
-        PullRefreshIndicator(refreshing, state, Modifier.align(Alignment.TopCenter))
+        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
@@ -125,21 +198,6 @@ fun StateView(state: LoadState?, count: Int = 1, content: @Composable () -> Unit
     }
 }
 
-@Composable
-fun ErrorStateView(state: LoadState?, content: @Composable () -> Unit) {
-    when (state) {
-        null -> OneCenter {
-            Text(text = "waiting")
-        }
-
-        is LoadState.Error -> OneCenter {
-            Text(text = state.error.localizedMessage.orEmpty())
-        }
-
-        else -> content()
-    }
-}
-
 fun buildExtras(block: MutableCreationExtras.() -> Unit): MutableCreationExtras {
     return MutableCreationExtras().apply {
         block()
@@ -156,6 +214,7 @@ val defaultFactory = object : ViewModelProvider.Factory {
                 extras[VideoIdLong]!!,
                 extras[CommentId]!!
             )
+
             VideoSearchViewModel::class.java -> VideoSearchViewModel()
             UserBannerViewModel::class.java -> UserBannerViewModel()
             BangumiViewModel::class.java -> BangumiViewModel(extras[VideoId]!!, extras[SeasonId]!!)
@@ -171,6 +230,7 @@ inline fun <T, R> request(
     service: () -> ResultInfo2<T>,
     build: (T) -> R
 ) {
+    state.loading()
     try {
         val res = service()
         val result = res.result
@@ -187,17 +247,15 @@ inline fun <T> request(
     state: MutableLiveData<LoadingState>,
     data: MutableLiveData<T>,
     service: () -> ResultInfo2<T>,
+) = request(state, data, service) {
+    it
+}
+
+inline fun <T> request(
+    handler: LoadingHandler<T>,
+    service: () -> ResultInfo2<T>,
 ) {
-    state.loading()
-    try {
-        val res = service()
-        val result = res.result
-        if (res.isSuccess && result != null) {
-            data.value = result
-            state.loaded()
-        } else state.error(res.error())
-    } catch (e: Exception) {
-        Log.e("request", "request: ", e)
-        state.error(e)
-    }
+    val state = handler.state
+    val data = handler.data
+    request(state, data, service)
 }

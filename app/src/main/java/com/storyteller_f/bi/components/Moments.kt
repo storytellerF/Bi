@@ -57,7 +57,7 @@ import com.storyteller_f.bi.StateView
 fun MomentsPage(openVideo: (String, String, String, Long) -> Unit) {
     val viewModel = viewModel<MomentsViewModel>()
     val lazyPagingItems = viewModel.flow.collectAsLazyPagingItems()
-    StateView(state = lazyPagingItems.loadState.refresh) {
+    StateView(pagingItems = lazyPagingItems) {
         LazyColumn {
             topRefreshing(lazyPagingItems)
             items(

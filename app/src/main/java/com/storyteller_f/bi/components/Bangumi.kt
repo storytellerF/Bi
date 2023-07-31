@@ -34,6 +34,7 @@ import com.a10miaomiao.bilimiao.comm.entity.bangumi.NewestEpisodeInfo
 import com.a10miaomiao.bilimiao.comm.entity.bangumi.SeasonSectionInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
+import com.storyteller_f.bi.LoadingHandler
 import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.buildExtras
@@ -43,15 +44,14 @@ import com.storyteller_f.bi.unstable.BangumiPlayerRepository
 import kotlinx.coroutines.launch
 
 class BangumiViewModel(val id: String, private val seasonId: String) : ViewModel() {
-    val state = MutableLiveData<LoadingState>()
-    val info = MutableLiveData<BangumiInfo?>()
+    val bangumiHandler = LoadingHandler<BangumiInfo?>(::refresh)
 
     private val playState = MutableLiveData<LoadingState>()
     private val list = MutableLiveData<SeasonSectionInfo?>()
 
     private val current = MutableLiveData(id)
     val currentVideoRepository = current.switchMap { c ->
-        info.map { bangumiInfo ->
+        bangumiHandler.data.map { bangumiInfo ->
             val v = bangumiInfo?.episodes?.firstOrNull {
                 it.aid == c
             }
@@ -88,7 +88,7 @@ class BangumiViewModel(val id: String, private val seasonId: String) : ViewModel
 
     private fun refresh() {
         viewModelScope.launch {
-            request(state, info) {
+            request(bangumiHandler) {
                 BiliApiService.bangumiAPI.seasonInfo(seasonId)
                     .awaitCall()
                     .gson()
@@ -105,14 +105,14 @@ fun BangumiPage(id: String, seasonId: String) {
             set(VideoId, id)
             set(SeasonId, seasonId)
         })
-    val info by bangumiViewModel.info.observeAsState()
-    val state by bangumiViewModel.state.observeAsState()
+    val info by bangumiViewModel.bangumiHandler.data.observeAsState()
+    val state by bangumiViewModel.bangumiHandler.state.observeAsState()
     val bangumiPlayerRepository by bangumiViewModel.currentVideoRepository.observeAsState()
     val playerKit by rememberPlayerKit(
         videoPlayerRepository = bangumiPlayerRepository,
         initProgress = 0
     )
-    StateView(state = state) {
+    StateView(bangumiViewModel.bangumiHandler) {
         Column {
             Text(text = "id $id season $seasonId")
             VideoFrame(
