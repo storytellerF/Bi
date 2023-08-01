@@ -1,6 +1,5 @@
 package com.storyteller_f.bi
 
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.ExperimentalMaterialApi
@@ -64,28 +63,13 @@ fun OneCenter(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun StateView(state: LoadingState?, content: @Composable () -> Unit) {
-    when (state) {
-        null -> OneCenter {
-            Text(text = "waiting")
-        }
-
-        is LoadingState.Loading -> OneCenter {
-            Text(text = "loading")
-        }
-
-        is LoadingState.Error -> OneCenter {
-            Text(text = state.e.localizedMessage.orEmpty())
-        }
-
-        is LoadingState.Done -> if (state.itemCount == 0) OneCenter {
-            Text(text = "empty")
-        } else content()
+fun StateView(state: LoadingState?, content: @Composable () -> Unit) =
+    StateView(state = state, null) {
+        content()
     }
-}
 
 @Composable
-fun <T> StateView(state: LoadingState?, t: T?, content: @Composable (T?) -> Unit) {
+fun <Data> StateView(state: LoadingState?, data: Data?, content: @Composable (Data?) -> Unit) {
     when (state) {
         null -> OneCenter {
             Text(text = "waiting")
@@ -101,7 +85,7 @@ fun <T> StateView(state: LoadingState?, t: T?, content: @Composable (T?) -> Unit
 
         is LoadingState.Done -> if (state.itemCount == 0) OneCenter {
             Text(text = "empty")
-        } else content(t)
+        } else content(data)
     }
 }
 
@@ -131,7 +115,7 @@ fun StateView(handler: LoadingHandler<*>, content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun<T> StateViewGeneric(handler: LoadingHandler<T>, content: @Composable (T?) -> Unit) {
+fun <T> StateViewGeneric(handler: LoadingHandler<T>, content: @Composable (T?) -> Unit) {
     val state by handler.state.observeAsState()
     val observeAsState by handler.data.observeAsState()
     val refreshScope = rememberCoroutineScope()
@@ -147,7 +131,7 @@ fun<T> StateViewGeneric(handler: LoadingHandler<T>, content: @Composable (T?) ->
         if (refreshing && state !is LoadingState.Loading) refreshing = false
     }
     Box(modifier = Modifier.pullRefresh(refreshState)) {
-        StateView(state = state, t = observeAsState, content)
+        StateView(state = state, data = observeAsState, content)
         PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
@@ -179,23 +163,16 @@ fun <T : Any> StateView(pagingItems: LazyPagingItems<T>, function: @Composable (
 
 @Composable
 fun StateView(state: LoadState?, count: Int = 1, content: @Composable () -> Unit) {
-    when (state) {
-        null -> OneCenter {
-            Text(text = "waiting")
-        }
+    val loadingState = when (state) {
+        null -> null
 
-        is LoadState.Loading -> OneCenter {
-            Text(text = "loading")
-        }
+        is LoadState.Loading -> LoadingState.Loading("loading")
 
-        is LoadState.Error -> OneCenter {
-            Text(text = state.error.localizedMessage.orEmpty())
-        }
+        is LoadState.Error -> LoadingState.Error(state.error)
 
-        is LoadState.NotLoading -> if (count == 0) OneCenter {
-            Text(text = "empty")
-        } else content()
+        is LoadState.NotLoading -> LoadingState.Done(count)
     }
+    StateView(state = loadingState, content)
 }
 
 fun buildExtras(block: MutableCreationExtras.() -> Unit): MutableCreationExtras {
