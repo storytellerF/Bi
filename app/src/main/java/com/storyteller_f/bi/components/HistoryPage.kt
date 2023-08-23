@@ -56,18 +56,17 @@ fun MutableLiveData<LoadingState>.loading(message: String = "") {
     value = LoadingState.Loading(message)
 }
 
-//todo 增加搜索功能
-class HistoryViewModel : ViewModel() {
+abstract class PagingViewModel<K: Any, V: Any>(sourceBuilder: () -> PagingSource<K, V>): ViewModel() {
     val flow = Pager(
-        PagingConfig(pageSize = 20)
-    ) {
-        HistoryPagingSource()
-    }.flow
+        PagingConfig(pageSize = 20), pagingSourceFactory = sourceBuilder
+    ).flow
         .cachedIn(viewModelScope)
-
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+//todo 增加搜索功能
+class HistoryViewModel :
+    PagingViewModel<HistoryOuterClass.Cursor, HistoryOuterClass.CursorItem>({ HistoryPagingSource() })
+
 @Composable
 fun HistoryPage(openVideo: (String, String, String, Long) -> Unit = { _, _, _, _ -> }) {
     val viewModel = viewModel<HistoryViewModel>()

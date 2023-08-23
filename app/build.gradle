@@ -62,13 +62,11 @@ dependencies {
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
     implementation 'androidx.compose.material3:material3'
-    implementation platform('androidx.compose:compose-bom:2023.03.00')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation platform('androidx.compose:compose-bom:2023.05.01')
     androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
-    androidTestImplementation platform('androidx.compose:compose-bom:2023.03.00')
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
     implementation "androidx.compose.material:material"
@@ -110,8 +108,8 @@ def checkUnstableCode = tasks.register("unstableCodeCheck") {
 	 def comm = "$p/comm"
 	 def page = "$p/page"
     def checkList = List.of(
-		new String[]{"app/$comm/delegate/player/model/DashSource.kt", "c4e6218d5b6f8aa7828df6a4ec1f63922f63fe8b"},
-		new String[]{"app/$comm/delegate/player/model/VideoPlayerSource.kt", "6e08bdbb3f7eb0c0607ce6e4bab851a6519475d0"},
+		new String[]{"app/$comm/delegate/player/model/DashSource.kt", "87dd1e5eec74c2b4c1d7d032df8fa14406688649"},
+		new String[]{"app/$comm/delegate/player/model/VideoPlayerSource.kt", "87dd1e5eec74c2b4c1d7d032df8fa14406688649"},
 		new String[]{"app/$comm/delegate/player/PlayerDelegate2.kt", "56cedbd6136df633e27fa712dddd07f2a10325ec"},
 		new String[]{"bilimiao-comm/$comm/store/UserStore.kt", "d6d7f0ffeabd9e873dddbc3b414d5daa500df8db"},
 		new String[]{"app/$page/user/HistoryViewModel.kt", "8ea61bf1333d251c9558a457a1d27db3ef758d5f"},

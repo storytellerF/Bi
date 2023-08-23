@@ -534,7 +534,11 @@ fun <T> ResultInfo<T>.error(): Exception {
     return java.lang.Exception("$code $message")
 }
 
+fun <T, K: Any, V: Any> ResultInfo<T>.loadResultError(): PagingSource.LoadResult<K, V> {
+    return PagingSource.LoadResult.Error(Exception("$code $message"))
+}
+
 fun <T> ResultInfo2<T>.error(): Exception {
-    return java.lang.Exception("$code $message")
+    return Exception("$code $message")
 }
 

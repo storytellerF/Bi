@@ -63,13 +63,7 @@ fun OneCenter(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun StateView(state: LoadingState?, content: @Composable () -> Unit) =
-    StateView(state = state, null) {
-        content()
-    }
-
-@Composable
-fun <Data> StateView(state: LoadingState?, data: Data?, content: @Composable (Data?) -> Unit) {
+fun StateView(state: LoadingState?, content: @Composable () -> Unit) {
     when (state) {
         null -> OneCenter {
             Text(text = "waiting")
@@ -85,7 +79,7 @@ fun <Data> StateView(state: LoadingState?, data: Data?, content: @Composable (Da
 
         is LoadingState.Done -> if (state.itemCount == 0) OneCenter {
             Text(text = "empty")
-        } else content(data)
+        } else content()
     }
 }
 
@@ -109,29 +103,6 @@ fun StateView(handler: LoadingHandler<*>, content: @Composable () -> Unit) {
     }
     Box(modifier = Modifier.pullRefresh(refreshState)) {
         StateView(state, content)
-        PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun <T> StateViewGeneric(handler: LoadingHandler<T>, content: @Composable (T?) -> Unit) {
-    val state by handler.state.observeAsState()
-    val observeAsState by handler.data.observeAsState()
-    val refreshScope = rememberCoroutineScope()
-    var refreshing by remember { mutableStateOf(false) }
-    val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = {
-        refreshScope.launch {
-            refreshing = true
-            handler.handler
-        }
-    })
-    LaunchedEffect(key1 = refreshing, key2 = state) {
-        delay(refreshAtLeastDelay)
-        if (refreshing && state !is LoadingState.Loading) refreshing = false
-    }
-    Box(modifier = Modifier.pullRefresh(refreshState)) {
-        StateView(state = state, data = observeAsState, content)
         PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }

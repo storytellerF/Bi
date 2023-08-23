@@ -190,7 +190,7 @@ class BangumiPreviewProvider : PreviewParameterProvider<BangumiInfo?> {
                             sectionId = 62876,
                             sectionType = 0,
                             shareUrl = "https://m.bilibili.com/bangumi/play/ep511805",
-                            vid = ""
+                            vid = "",
                         ),
                         EpisodeInfo(
                             aid = "214390336",
@@ -240,7 +240,7 @@ class BangumiPreviewProvider : PreviewParameterProvider<BangumiInfo?> {
                         1,
                         1
                     ),
-                    39871,
+                    "39871",
                     13,
                     "",
                     3,

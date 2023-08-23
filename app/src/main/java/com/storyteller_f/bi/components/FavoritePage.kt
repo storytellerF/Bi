@@ -6,13 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,47 +16,36 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
+import com.a10miaomiao.bilimiao.comm.entity.ListAndCountInfo
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
 import com.a10miaomiao.bilimiao.comm.entity.media.MediaListInfo
-import com.a10miaomiao.bilimiao.comm.entity.user.UserSpaceFavFolderInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.gson
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.storyteller_f.bi.LoadingHandler
-import com.storyteller_f.bi.LoadingState
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
-import com.storyteller_f.bi.StateViewGeneric
 import com.storyteller_f.bi.unstable.userInfo
-import kotlinx.coroutines.launch
 
 @Composable
 fun FavoritePage(openMediaList: (MediaListInfo) -> Unit = {}) {
     val favoriteViewModel = viewModel<FavoriteViewModel>()
-    StateViewGeneric(favoriteViewModel.handler) {
+    val pagingItems = favoriteViewModel.flow.collectAsLazyPagingItems()
+    StateView(pagingItems) {
         LazyVerticalGrid(GridCells.Adaptive(150.dp)) {
-            it?.default_folder?.folder_detail?.let {
-                item {
-                    MediaListContainer(it, openMediaList)
-                }
-            }
-            it?.space_infos?.forEach {
-                item(span = {
-                    GridItemSpan(maxLineSpan)
-                }) {
-                    Text(text = "${it.id} - ${it.name} - ${it.mediaListResponse.count}")
-                }
-                it.mediaListResponse.list?.let { list ->
-                    items(list) { info ->
-                        MediaListContainer(mediaListInfo = info, openMediaList)
-                    }
-                }
+            items(
+                count = pagingItems.itemCount,
+                key = pagingItems.itemKey(),
+                contentType = pagingItems.itemContentType()
+            ) {
+                pagingItems[it]?.let { info -> MediaListContainer(info, openMediaList) }
             }
         }
     }
@@ -77,7 +62,10 @@ class MediaListContainerPreviewProvider : PreviewParameterProvider<MediaListInfo
 @Preview
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun MediaListContainer(@PreviewParameter(MediaListContainerPreviewProvider::class) mediaListInfo: MediaListInfo, openMediaList: (MediaListInfo) -> Unit = {}) {
+fun MediaListContainer(
+    @PreviewParameter(MediaListContainerPreviewProvider::class) mediaListInfo: MediaListInfo,
+    openMediaList: (MediaListInfo) -> Unit = {}
+) {
     Box(contentAlignment = Alignment.Center, modifier = Modifier.clickable {
         openMediaList(mediaListInfo)
     }) {
@@ -85,9 +73,7 @@ fun MediaListContainer(@PreviewParameter(MediaListContainerPreviewProvider::clas
         StandBy(modifier) {
             val u = UrlUtil.autoHttps(mediaListInfo.cover)
             GlideImage(
-                model = "$u@672w_378h_1c_",
-                contentDescription = "cover",
-                modifier = modifier
+                model = "$u@672w_378h_1c_", contentDescription = "cover", modifier = modifier
             )
         }
 
@@ -99,40 +85,40 @@ fun MediaListContainer(@PreviewParameter(MediaListContainerPreviewProvider::clas
     }
 }
 
-class FavoriteViewModel : ViewModel() {
-    val handler = LoadingHandler<UserSpaceFavFolderInfo>(::refresh)
-    val state = handler.state
-    val data = handler.data
+class FavoriteViewModel : PagingViewModel<Int, MediaListInfo>({
+    FavoriteSource(userInfo.value?.mid?.toString()?.trim().orEmpty())
+})
 
-    init {
-        refresh()
+class FavoriteSource(private val mid: String) : PagingSource<Int, MediaListInfo>() {
+    override fun getRefreshKey(state: PagingState<Int, MediaListInfo>): Int? {
+        return null
     }
 
-    private fun refresh() {
-        viewModelScope.launch {
-            state.loading()
-            try {
-                val mid = userInfo.value?.mid?.toString().orEmpty()
-                if (mid.isNotEmpty()) {
-                    //todo 分页
-                    val res = BiliApiService.userApi.favFolderList(mid, 1, 20).awaitCall()
-                        .gson<ResultInfo<UserSpaceFavFolderInfo>>()
-                    if (res.code == 0) {
-                        val info = res.data
-                        data.value = info
-                        state.loaded()
-                    } else {
-                        state.error(res.message)
-                    }
-                } else {
-                    state.error("找不到mid")
-                }
-            } catch (e: Throwable) {
-                state.error(e)
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaListInfo> {
+        if (mid.isEmpty()) {
+            return loadResultError("mid 不合法")
+        }
+        val key = params.key ?: 1
+        return try {
+            val res = BiliApiService.userApi.favFolderList(
+                mid, pageNum = key, pageSize = params.loadSize
+            ).awaitCall().gson<ResultInfo<ListAndCountInfo<MediaListInfo>>>()
+            if (!res.isSuccess) {
+                res.loadResultError()
+            } else {
+                val data = res.data
+                LoadResult.Page(
+                    data.list, prevKey = null, nextKey = if (data.has_more) key + 1 else null
+                )
             }
+        } catch (e: Exception) {
+            LoadResult.Error(e)
         }
 
     }
+
 }
 
-
+fun <K : Any, V : Any> loadResultError(error: String): PagingSource.LoadResult.Error<K, V> {
+    return PagingSource.LoadResult.Error(Exception(error))
+}
