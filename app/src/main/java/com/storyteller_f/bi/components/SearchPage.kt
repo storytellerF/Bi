@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -106,7 +107,7 @@ fun SearchPage(
     back: () -> Unit = {}
 ) {
     val viewModel = viewModel<VideoSearchViewModel>(factory = defaultFactory)
-    var active by remember {
+    var actived by remember {
         mutableStateOf(false)
     }
     var input by remember {
@@ -118,7 +119,7 @@ fun SearchPage(
             Icon(Icons.Filled.Clear, contentDescription = "clear", modifier = Modifier.clickable {
                 viewModel.keyword.value = ""
             })
-            if (!active) HomeAvatar(userInfo)
+            if (!actived) HomeAvatar(userInfo)
 
         }
     }
@@ -126,13 +127,13 @@ fun SearchPage(
         Icon(Icons.Filled.ArrowBack, contentDescription = "back", modifier = Modifier.clickable {
             when {
                 noMiddleState -> back()
-                active -> active = false
+                actived -> actived = false
                 else -> back()
             }
         })
     }
     val onActiveChange: (Boolean) -> Unit = {
-        active = it
+        actived = it
     }
     val onSearch: (String) -> Unit = {
         viewModel.keyword.value = it
@@ -144,38 +145,37 @@ fun SearchPage(
     val placeholder = @Composable {
         Text(text = "search")
     }
+    val content: @Composable (ColumnScope.() -> Unit) = {
+        SearchContent(viewModel)
+    }
     if (dockMode) {
         DockedSearchBar(
             query = input,
             onQueryChange = onQueryChange,
             onSearch = onSearch,
-            active = active,
+            active = actived,
             onActiveChange = onActiveChange,
             placeholder = placeholder,
             leadingIcon = leadingIcon,
             trailingIcon = trailingIcon,
-            modifier = modifier
-        ) {
-            SearchContent(viewModel)
-        }
+            modifier = modifier, content = content
+        )
     } else {
         SearchBar(
             query = input,
             onQueryChange = onQueryChange,
             onSearch = onSearch,
-            active = active,
+            active = actived,
             onActiveChange = onActiveChange,
             placeholder = placeholder,
             leadingIcon = leadingIcon,
             trailingIcon = trailingIcon,
-            modifier = modifier
-        ) {
-            SearchContent(viewModel)
-        }
+            modifier = modifier, content = content
+        )
     }
     LaunchedEffect(key1 = noMiddleState) {
         if (noMiddleState) {
-            active = true
+            actived = true
         }
     }
     BackHandler(enabled = noMiddleState) {
@@ -224,31 +224,35 @@ private fun RowScope.HomeAvatar(
             )
         ) {
             Surface {
-                Column {
-                    val context = LocalContext.current
-                    Spacer(Modifier.height(12.dp))
-                    UserBanner(u = userInfo)
-                    Spacer(Modifier.height(12.dp))
-                    NavigationDrawerItem(label = { Text(text = "Setting") }, icon = {
-                        Icon(Icons.Filled.Settings, contentDescription = "setting")
-                    }, selected = false, onClick = {
-                        Toast.makeText(
-                            context,
-                            "not implementation",
-                            Toast.LENGTH_SHORT
-                        )
-                            .show()
-                    })
-                    NavigationDrawerItem(label = { Text(text = "Logout") }, icon = {
-                        Icon(Icons.Filled.Close, contentDescription = "logout")
-                    }, selected = false, onClick = {
-                        context.logout()
-                    })
-                }
-
+                AvatarContent(userInfo)
             }
         }
 
+    }
+}
+
+@Composable
+private fun AvatarContent(userInfo: UserInfo?) {
+    Column {
+        val context = LocalContext.current
+        Spacer(Modifier.height(12.dp))
+        UserBanner(u = userInfo)
+        Spacer(Modifier.height(12.dp))
+        NavigationDrawerItem(label = { Text(text = "Setting") }, icon = {
+            Icon(Icons.Filled.Settings, contentDescription = "setting")
+        }, selected = false, onClick = {
+            Toast.makeText(
+                context,
+                "not implementation",
+                Toast.LENGTH_SHORT
+            )
+                .show()
+        })
+        NavigationDrawerItem(label = { Text(text = "Logout") }, icon = {
+            Icon(Icons.Filled.Close, contentDescription = "logout")
+        }, selected = false, onClick = {
+            context.logout()
+        })
     }
 }
 
