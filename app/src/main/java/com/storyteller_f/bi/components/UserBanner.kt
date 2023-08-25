@@ -56,11 +56,11 @@ class UserBannerPreviewProvider : PreviewParameterProvider<UserInfo?> {
 @Preview
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun UserBanner(@PreviewParameter(UserBannerPreviewProvider::class) u: UserInfo?) {
+fun UserBanner(@PreviewParameter(UserBannerPreviewProvider::class) u: UserInfo?, login: () -> Unit = {}) {
     val coverSize = Modifier
         .size(60.dp)
     val modifier = Modifier
-        .padding(start = 16.dp)
+        .padding(16.dp)
         .fillMaxWidth()
     if (u != null) {
         val face = UrlUtil.autoHttps(u.face)
@@ -85,31 +85,16 @@ fun UserBanner(@PreviewParameter(UserBannerPreviewProvider::class) u: UserInfo?)
             val info by v.data.observeAsState()
             Text(text = info?.card?.sign ?: "不说两句？", modifier = Modifier.padding(8.dp))
             Row(modifier = Modifier.padding(8.dp)) {
-                Text(
-                    text = "follower ${u.follower}", modifier = Modifier
-                        .background(
-                            MaterialTheme.colorScheme.secondary,
-                            RoundedCornerShape(16.dp)
-                        )
-                        .padding(8.dp), color = MaterialTheme.colorScheme.onSecondary
-                )
-                Text(
-                    text = "following ${u.following}", modifier = Modifier
-                        .padding(start = 8.dp)
-                        .background(
-                            MaterialTheme.colorScheme.secondary,
-                            RoundedCornerShape(16.dp)
-                        )
-                        .padding(8.dp), color = MaterialTheme.colorScheme.onSecondary
-                )
+                Badge("follower ${u.follower}")
+                Spacer(modifier = Modifier.padding(start = 8.dp))
+                Badge("following ${u.following}")
             }
         }
     } else {
-        val current = LocalContext.current
         Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = coverSize.background(Color.Blue))
             Button(modifier = Modifier.padding(start = 8.dp), onClick = {
-                current.startActivity(Intent(current, LoginActivity::class.java))
+                login()
             }) {
                 Text(text = "login")
             }
@@ -118,16 +103,28 @@ fun UserBanner(@PreviewParameter(UserBannerPreviewProvider::class) u: UserInfo?)
 }
 
 @Composable
+private fun Badge(text: String) {
+    Text(
+        text = text, modifier = Modifier
+            .background(
+                MaterialTheme.colorScheme.secondary,
+                RoundedCornerShape(16.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onSecondary
+    )
+}
+
+@Composable
 private fun Dot(s: String = "") {
     Box(
         modifier = Modifier
-            .size(32.dp)
+            .size(24.dp)
             .background(
                 MaterialTheme.colorScheme.tertiary,
                 RoundedCornerShape(16.dp)
             ), contentAlignment = Alignment.Center
     ) {
-        Text(text = s, fontSize = 16.sp, color = MaterialTheme.colorScheme.onTertiary)
+        Text(text = s, fontSize = 12.sp, color = MaterialTheme.colorScheme.onTertiary)
     }
 }
 

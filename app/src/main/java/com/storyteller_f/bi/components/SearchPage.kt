@@ -3,17 +3,11 @@ package com.storyteller_f.bi.components
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +21,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,20 +39,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -95,19 +83,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
-@OptIn(
-    ExperimentalMaterial3Api::class
-)
 @Composable
 fun SearchPage(
     modifier: Modifier = Modifier,
     userInfo: UserInfo? = null,
     dockMode: Boolean = false,
     noMiddleState: Boolean = false,
+    login: () -> Unit = {},
     back: () -> Unit = {}
 ) {
     val viewModel = viewModel<VideoSearchViewModel>(factory = defaultFactory)
-    var actived by remember {
+    var activated by remember {
         mutableStateOf(false)
     }
     var input by remember {
@@ -119,21 +105,20 @@ fun SearchPage(
             Icon(Icons.Filled.Clear, contentDescription = "clear", modifier = Modifier.clickable {
                 viewModel.keyword.value = ""
             })
-            if (!actived) HomeAvatar(userInfo)
-
+            if (!activated && userInfo != null) HomeAvatar(userInfo, login)
         }
     }
     val leadingIcon = @Composable {
         Icon(Icons.Filled.ArrowBack, contentDescription = "back", modifier = Modifier.clickable {
             when {
                 noMiddleState -> back()
-                actived -> actived = false
+                activated -> activated = false
                 else -> back()
             }
         })
     }
     val onActiveChange: (Boolean) -> Unit = {
-        actived = it
+        activated = it
     }
     val onSearch: (String) -> Unit = {
         viewModel.keyword.value = it
@@ -148,12 +133,51 @@ fun SearchPage(
     val content: @Composable (ColumnScope.() -> Unit) = {
         SearchContent(viewModel)
     }
+    CombinedSearchBar(
+        dockMode,
+        input,
+        onQueryChange,
+        onSearch,
+        activated,
+        onActiveChange,
+        placeholder,
+        leadingIcon,
+        trailingIcon,
+        modifier,
+        content
+    )
+    LaunchedEffect(key1 = noMiddleState) {
+        if (noMiddleState) {
+            activated = true
+        }
+    }
+    BackHandler(enabled = noMiddleState) {
+        back()
+    }
+
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun CombinedSearchBar(
+    dockMode: Boolean,
+    input: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit,
+    activated: Boolean,
+    onActiveChange: (Boolean) -> Unit,
+    placeholder: @Composable () -> Unit,
+    leadingIcon: @Composable () -> Unit,
+    trailingIcon: @Composable () -> Unit,
+    modifier: Modifier,
+    content: @Composable (ColumnScope.() -> Unit)
+) {
     if (dockMode) {
         DockedSearchBar(
             query = input,
             onQueryChange = onQueryChange,
             onSearch = onSearch,
-            active = actived,
+            active = activated,
             onActiveChange = onActiveChange,
             placeholder = placeholder,
             leadingIcon = leadingIcon,
@@ -165,7 +189,7 @@ fun SearchPage(
             query = input,
             onQueryChange = onQueryChange,
             onSearch = onSearch,
-            active = actived,
+            active = activated,
             onActiveChange = onActiveChange,
             placeholder = placeholder,
             leadingIcon = leadingIcon,
@@ -173,70 +197,47 @@ fun SearchPage(
             modifier = modifier, content = content
         )
     }
-    LaunchedEffect(key1 = noMiddleState) {
-        if (noMiddleState) {
-            actived = true
-        }
-    }
-    BackHandler(enabled = noMiddleState) {
-        back()
-    }
-
 }
 
 @Composable
-@OptIn(ExperimentalGlideComposeApi::class, ExperimentalComposeUiApi::class)
-private fun RowScope.HomeAvatar(
-    userInfo: UserInfo?,
+@OptIn(ExperimentalGlideComposeApi::class,
+    ExperimentalMaterial3Api::class
+)
+private fun HomeAvatar(
+    userInfo: UserInfo,
+    login: () -> Unit = {},
 ) {
-    val view = LocalView.current
-
     val coverSize = Modifier
         .padding(start = 8.dp)
         .size(24.dp)
     var showPopup by remember {
         mutableStateOf(false)
     }
-    if (userInfo != null) {
-        StandBy(coverSize) {
-            GlideImage(
-                model = UrlUtil.autoHttps(userInfo.face),
-                contentDescription = "avatar",
-                modifier = coverSize.clickable {
-                    showPopup = true
-                }
-            )
-        }
-    } else if (view.isInEditMode) {
-        Box(modifier = coverSize.background(Color.Blue))
+    StandBy(coverSize) {
+        GlideImage(
+            model = UrlUtil.autoHttps(userInfo.face),
+            contentDescription = "avatar",
+            modifier = coverSize.clickable {
+                showPopup = true
+            }
+        )
     }
-    val pxValue = LocalDensity.current.run { 24.dp.toPx() }
-    AnimatedVisibility(visible = showPopup, enter = fadeIn(), exit = fadeOut()) {
-        Popup(
-            offset = IntOffset(0, pxValue.toInt()),
-            alignment = Alignment.TopEnd,
-            onDismissRequest = {
-                showPopup = false
-            },
-            properties = PopupProperties(
-                focusable = true,
-                usePlatformDefaultWidth = true
-            )
-        ) {
+    if (showPopup) {
+        AlertDialog(onDismissRequest = { showPopup = false }, properties = DialogProperties(decorFitsSystemWindows = false)) {
             Surface {
-                AvatarContent(userInfo)
+                AvatarContent(userInfo, login)
             }
         }
-
     }
 }
 
+@Preview
 @Composable
-private fun AvatarContent(userInfo: UserInfo?) {
+private fun AvatarContent(userInfo: UserInfo? = null, login: () -> Unit = {}) {
     Column {
         val context = LocalContext.current
         Spacer(Modifier.height(12.dp))
-        UserBanner(u = userInfo)
+        UserBanner(u = userInfo, login)
         Spacer(Modifier.height(12.dp))
         NavigationDrawerItem(label = { Text(text = "Setting") }, icon = {
             Icon(Icons.Filled.Settings, contentDescription = "setting")
@@ -538,7 +539,7 @@ fun <T> ResultInfo<T>.error(): Exception {
     return java.lang.Exception("$code $message")
 }
 
-fun <T, K: Any, V: Any> ResultInfo<T>.loadResultError(): PagingSource.LoadResult<K, V> {
+fun <T, K : Any, V : Any> ResultInfo<T>.loadResultError(): PagingSource.LoadResult<K, V> {
     return PagingSource.LoadResult.Error(Exception("$code $message"))
 }
 

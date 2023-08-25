@@ -132,7 +132,8 @@ class MainActivity : ComponentActivity() {
                             SearchPage(
                                 modifier = Modifier.align(Alignment.TopCenter),
                                 userInfo = user,
-                                dockMode = wideMode
+                                dockMode = wideMode,
+                                login = ::startLogin,
                             )
                             Column(modifier = Modifier.padding(top = 72.dp).displayCutoutPadding()) {
                                 NavHost(
@@ -141,7 +142,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .weight(1f)
                                 ) {
-                                    homeNav(selectRoute, openVideo)
+                                    homeNav(selectRoute, ::startLogin, openVideo)
                                 }
                                 if (!wideMode)
                                     HomeNavigation(currentRoute, selectRoute)
@@ -161,16 +162,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun startLogin() {
+        startActivity(Intent(this, LoginActivity::class.java))
+    }
+
 }
 
 @Composable
-fun UserAware(content: @Composable () -> Unit) {
+fun UserAware(login: () -> Unit = {}, content: @Composable () -> Unit) {
     val u by userInfo.observeAsState()
-    val current = LocalContext.current
     if (u == null) {
         OneCenter {
             Button(onClick = {
-                current.startActivity(Intent(current, LoginActivity::class.java))
+                login()
             }) {
                 Text(text = "login")
             }

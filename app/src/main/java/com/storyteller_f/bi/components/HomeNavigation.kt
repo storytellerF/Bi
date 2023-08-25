@@ -56,25 +56,26 @@ fun NavItemIcon(screen: Screen) {
  */
 fun NavGraphBuilder.homeNav(
     selectRoute: (String) -> Unit,
+    login: () -> Unit = {},
     openVideo: (String, String, String, Long) -> Unit
 ) {
     composable(Screen.History.route) {
-        UserAware {
+        UserAware(login) {
             HistoryPage(openVideo)
         }
     }
     composable(Screen.Moments.route) {
-        UserAware {
+        UserAware(login) {
             MomentsPage(openVideo)
         }
     }
     composable(Screen.Playlist.route) {
-        UserAware {
+        UserAware(login) {
             PlaylistPage(openVideo)
         }
     }
     composable(Screen.Favorite.route) {
-        UserAware {
+        UserAware(login) {
             FavoritePage {
                 selectRoute(
                     Screen.FavoriteList.route.replace(
