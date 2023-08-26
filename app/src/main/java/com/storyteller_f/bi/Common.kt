@@ -1,11 +1,18 @@
 package com.storyteller_f.bi
 
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Color
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -25,6 +33,9 @@ import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo2
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
 import com.storyteller_f.bi.components.BangumiViewModel
 import com.storyteller_f.bi.components.CommentId
 import com.storyteller_f.bi.components.CommentReplyViewModel
@@ -40,8 +51,11 @@ import com.storyteller_f.bi.components.VideoViewModel
 import com.storyteller_f.bi.components.error
 import com.storyteller_f.bi.components.loaded
 import com.storyteller_f.bi.components.loading
+import com.storyteller_f.bi.unstable.userInfo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Collections
+import java.util.stream.IntStream
 
 sealed class LoadingState {
     class Loading(val state: String) : LoadingState()
@@ -206,4 +220,51 @@ inline fun <T> request(
     val state = handler.state
     val data = handler.data
     request(state, data, service)
+}
+
+
+@Composable
+fun StandBy(modifier: Modifier, me: @Composable () -> Unit) {
+    val view = LocalView.current
+    if (view.isInEditMode) {
+        Box(modifier.background(MaterialTheme.colorScheme.primaryContainer))
+    } else {
+        me()
+    }
+}
+
+
+fun String.createQRImage(width: Int, height: Int): Bitmap {
+    val bitMatrix = QRCodeWriter().encode(
+        this,
+        BarcodeFormat.QR_CODE,
+        width,
+        height,
+        Collections.singletonMap(EncodeHintType.CHARACTER_SET, "utf-8")
+    )
+    return Bitmap.createBitmap(
+        IntStream.range(0, height).flatMap { h: Int ->
+            IntStream.range(0, width).map { w: Int ->
+                if (bitMatrix[w, h]
+                ) Color.BLACK else Color.WHITE
+            }
+        }.toArray(),
+        width, height, Bitmap.Config.ARGB_8888
+    )
+}
+
+@Composable
+fun UserAware(login: () -> Unit = {}, content: @Composable () -> Unit) {
+    val u by userInfo.observeAsState()
+    if (u == null) {
+        OneCenter {
+            Button(onClick = {
+                login()
+            }) {
+                Text(text = "login")
+            }
+        }
+    } else {
+        content()
+    }
 }

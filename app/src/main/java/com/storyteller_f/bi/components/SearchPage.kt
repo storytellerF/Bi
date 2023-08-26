@@ -1,6 +1,5 @@
 package com.storyteller_f.bi.components
 
-import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -75,7 +74,6 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.storyteller_f.bi.StandBy
 import com.storyteller_f.bi.StateView
 import com.storyteller_f.bi.defaultFactory
-import com.storyteller_f.bi.playVideo
 import com.storyteller_f.bi.ui.theme.BiTheme
 import com.storyteller_f.bi.unstable.logout
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -89,6 +87,7 @@ fun SearchPage(
     userInfo: UserInfo? = null,
     dockMode: Boolean = false,
     noMiddleState: Boolean = false,
+    playVideo: (String?, String?, String, Long) -> Unit = { _, _, _, _ -> },
     login: () -> Unit = {},
     back: () -> Unit = {}
 ) {
@@ -131,7 +130,7 @@ fun SearchPage(
         Text(text = "search")
     }
     val content: @Composable (ColumnScope.() -> Unit) = {
-        SearchContent(viewModel)
+        SearchContent(viewModel, playVideo)
     }
     CombinedSearchBar(
         dockMode,
@@ -200,7 +199,8 @@ private fun CombinedSearchBar(
 }
 
 @Composable
-@OptIn(ExperimentalGlideComposeApi::class,
+@OptIn(
+    ExperimentalGlideComposeApi::class,
     ExperimentalMaterial3Api::class
 )
 private fun HomeAvatar(
@@ -223,7 +223,10 @@ private fun HomeAvatar(
         )
     }
     if (showPopup) {
-        AlertDialog(onDismissRequest = { showPopup = false }, properties = DialogProperties(decorFitsSystemWindows = false)) {
+        AlertDialog(
+            onDismissRequest = { showPopup = false },
+            properties = DialogProperties(decorFitsSystemWindows = false)
+        ) {
             Surface {
                 AvatarContent(userInfo, login)
             }
@@ -273,9 +276,8 @@ private fun PreviewSearchPage() {
 @OptIn(ExperimentalFoundationApi::class)
 private fun SearchContent(
     viewModel: VideoSearchViewModel,
+    playVideo: (String?, String?, String, Long) -> Unit,
 ) {
-    val current = LocalContext.current
-
     var selected by remember {
         mutableIntStateOf(0)
     }
@@ -300,9 +302,8 @@ private fun SearchContent(
             }
         }
     }
-    //                                    current.playVideo(item?.param)
     HorizontalPager(state = pagerState) {
-        SearchPageBuilder(it, viewModel, current)
+        SearchPageBuilder(it, viewModel, playVideo)
     }
 
 }
@@ -311,7 +312,7 @@ private fun SearchContent(
 private fun SearchPageBuilder(
     it: Int,
     viewModel: VideoSearchViewModel,
-    current: Context
+    playVideo: (String?, String?, String, Long) -> Unit
 ) {
     when (it) {
         0 -> {
@@ -321,7 +322,7 @@ private fun SearchPageBuilder(
                     item?.title.orEmpty(),
                     item?.author.orEmpty()
                 ) {
-                    current.playVideo(item?.param, item?.param, "archive")
+                    playVideo(item?.param, item?.param, "archive", 0)
                 }
             }
         }

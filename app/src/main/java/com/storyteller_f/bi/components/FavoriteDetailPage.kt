@@ -29,8 +29,7 @@ import com.storyteller_f.bi.playVideo
 object FavoriteIdKey : CreationExtras.Key<String>
 
 @Composable
-fun FavoriteDetailPage(id: String) {
-    val current = LocalContext.current
+fun FavoriteDetailPage(id: String, playVideo: (String?, String?, String, Long) -> Unit) {
     val detailViewModel = viewModel<FavoriteDetailViewModel>(
         factory = defaultFactory,
         extras = MutableCreationExtras().apply {
@@ -51,7 +50,7 @@ fun FavoriteDetailPage(id: String) {
                     item?.title.orEmpty(),
                     item?.upper?.name.orEmpty()
                 ) {
-                    current.playVideo(item?.id, item?.id, "archive", 0)
+                    playVideo(item?.id, item?.id, "archive", 0)
                 }
             }
         }

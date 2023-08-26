@@ -1,5 +1,7 @@
 package com.storyteller_f.bi
 
+import android.content.Context
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
@@ -54,4 +56,17 @@ class VideoActivity : ComponentActivity() {
     companion object {
         private const val TAG = "VideoActivity"
     }
+}
+
+fun Context.playVideo(kid: String?, oid: String?, business: String, progress: Long = 0L) {
+    startActivity(
+        Intent(
+            this,
+            VideoActivity::class.java
+        ).apply {
+            putExtra("videoId", oid)
+            putExtra("extra", kid)
+            putExtra("progress", progress)
+            putExtra("business", business)
+        })
 }
