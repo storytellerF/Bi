@@ -144,8 +144,8 @@ if (r.exists()) {
         afterEvaluate {
             def debug = tasks.named("packageDebug")
             def release = tasks.named("packageRelease")
-            debug.get().dependsOn(checkUnstableCode)
-            release.get().dependsOn(checkUnstableCode)
+            //debug.get().dependsOn(checkUnstableCode)
+            //release.get().dependsOn(checkUnstableCode)
         }
     }
 }

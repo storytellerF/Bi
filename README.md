@@ -30,7 +30,6 @@ git submodule update --init
 需要安装jdk 17，Android Studio Preview Giraffe，Android SDK
 
 1. 可以使用Android Studio 一键构建
-    需要安装beta 版本。使用了beta 版本的agp
 2. 也可以使用命令行构建
     可以不安装Android Studio至少需要安装Android SDK
 
