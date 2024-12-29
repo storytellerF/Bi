@@ -1,5 +1,7 @@
 # 薜
 
+> 此项目不在维护，请转到https://github.com/storytellerF/Bi2 ，新项目支持跨平台
+
 ![](https://img.shields.io/badge/%E5%AF%8C%E5%BC%BA-%E6%B0%91%E4%B8%BB-brightgreen)
 ![](https://img.shields.io/badge/%E6%96%87%E6%98%8E-%E5%92%8C%E8%B0%90-green)
 ![](https://img.shields.io/badge/%E8%87%AA%E7%94%B1-%E5%B9%B3%E7%AD%89-yellowgreen)
